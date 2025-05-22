@@ -1,0 +1,4 @@
+.vscode/
+boost/
+nlohmann/
+build/
