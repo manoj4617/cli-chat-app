@@ -2,3 +2,4 @@
 boost/
 nlohmann/
 build/
+SQLiteCpp/
