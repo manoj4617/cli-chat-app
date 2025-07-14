@@ -34,34 +34,34 @@ enum MessageType{
     PING // S->C KEEP ALIVE REQUEST
 };
 
-std::string message_type_to_string(MessageType type){
+inline std::string message_type_to_string(MessageType type){
     switch(type){
-        case MessageType::AUTH_REQUEST: return "AUTH_REQUEST"; 
-        case MessageType::SEND_MESSAGE_REQUEST: return "SEND_MESSAGE_REQUEST"; 
-        case MessageType::CREATE_BARRACK_REQUEST: return "CREATE_BARRACK_REQUEST";
-        case MessageType::JOIN_BARRACK_REQUEST: return "JOIN_BARRACK_REQUEST";
-        case MessageType::LEAVE_BARRACK_REQUEST: return "LEAVE_BARRACK_REQUEST";
-        case MessageType::LIST_BARRACK_REQUEST: return "LIST_BARRACK_REQUEST";
-        case MessageType::PONG: return "PONG";  
-        case MessageType::AUTH_SUCCESS: return "AUTH_SUCCESS"; 
-        case MessageType::AUTH_FAILURE: return "AUTH_FAILURE";
-        case MessageType::RECEIVE_MESSAGE_BROADCAST: return "RECEIVE_MESSAGE_BROADCAST";
-        case MessageType::CREATE_BARRACK_SUCCESS: return "CREATE_BARRACK_SUCCESS";
-        case MessageType::CREATE_BARRACK_FAILURE: return "CREATE_BARRACK_FAILURE"; 
-        case MessageType::JOIN_BARRACK_SUCCESS: return "JOIN_BARRACK_SUCCESS";
-        case MessageType::JOIN_BARRACK_FAILURE: return "JOIN_BARRACK_FAILURE";
-        case MessageType::LEAVE_BARRACK_SUCCESS: return "LEAVE_BARRACK_SUCCESS"; 
-        case MessageType::LEAVE_BARRACK_FAILURE: return "LEAVE_BARRACK_FAILURE";
-        case MessageType::LIST_BARRACK_RESPONSE: return "LIST_BARRACK_RESPONSE";
-        case MessageType::USER_JOINED_BARRACK_NOTIFY: return "USER_JOINED_BARRACK_NOTIFY";
-        case MessageType::USER_LEFT_BARRACK_NOTIFY: return "USER_LEFT_BARRACK_NOTIFY";
-        case MessageType::ERROR_MESSAGE: return "ERROR_MESSAGE"; 
-        case MessageType::PING : return "PING";  
-        default: return  "UNKNOWN";
+        case MessageType::AUTH_REQUEST: return std::string("AUTH_REQUEST"); 
+        case MessageType::SEND_MESSAGE_REQUEST: return std::string("SEND_MESSAGE_REQUEST"); 
+        case MessageType::CREATE_BARRACK_REQUEST: return std::string("CREATE_BARRACK_REQUEST");
+        case MessageType::JOIN_BARRACK_REQUEST: return std::string("JOIN_BARRACK_REQUEST");
+        case MessageType::LEAVE_BARRACK_REQUEST: return std::string("LEAVE_BARRACK_REQUEST");
+        case MessageType::LIST_BARRACK_REQUEST: return std::string("LIST_BARRACK_REQUEST");
+        case MessageType::PONG: return std::string("PONG");  
+        case MessageType::AUTH_SUCCESS: return std::string("AUTH_SUCCESS"); 
+        case MessageType::AUTH_FAILURE: return std::string("AUTH_FAILURE");
+        case MessageType::RECEIVE_MESSAGE_BROADCAST: return std::string("RECEIVE_MESSAGE_BROADCAST");
+        case MessageType::CREATE_BARRACK_SUCCESS: return std::string("CREATE_BARRACK_SUCCESS");
+        case MessageType::CREATE_BARRACK_FAILURE: return std::string("CREATE_BARRACK_FAILURE"); 
+        case MessageType::JOIN_BARRACK_SUCCESS: return std::string("JOIN_BARRACK_SUCCESS");
+        case MessageType::JOIN_BARRACK_FAILURE: return std::string("JOIN_BARRACK_FAILURE");
+        case MessageType::LEAVE_BARRACK_SUCCESS: return std::string("LEAVE_BARRACK_SUCCESS"); 
+        case MessageType::LEAVE_BARRACK_FAILURE: return std::string("LEAVE_BARRACK_FAILURE");
+        case MessageType::LIST_BARRACK_RESPONSE: return std::string("LIST_BARRACK_RESPONSE");
+        case MessageType::USER_JOINED_BARRACK_NOTIFY: return std::string("USER_JOINED_BARRACK_NOTIFY");
+        case MessageType::USER_LEFT_BARRACK_NOTIFY: return std::string("USER_LEFT_BARRACK_NOTIFY");
+        case MessageType::ERROR_MESSAGE: return std::string("ERROR_MESSAGE"); 
+        case MessageType::PING : return std::string("PING");  
+        default: return std::string("UNKNOWN");
     }
 }
 
-MessageType string_to_message_type(const std::string& type_str) {
+inline MessageType string_to_message_type(const std::string& type_str) {
     if (type_str == "AUTH_REQUEST") return MessageType::AUTH_REQUEST;
     else if (type_str == "SEND_MESSAGE_REQUEST") return MessageType::SEND_MESSAGE_REQUEST;
     else if (type_str == "CREATE_BARRACK_REQUEST") return MessageType::CREATE_BARRACK_REQUEST;

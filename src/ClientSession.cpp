@@ -1,3 +1,4 @@
+#include "ClientSession.hpp" 
 #include "ConnectionManager.hpp"
 #include <nlohmann/json.hpp>
 
@@ -5,9 +6,11 @@ using json = nlohmann::json;
 
 ClientSession::ClientSession(tcp::socket&& socket,
                             SessionID session_id,
-                            std::shared_ptr<ConnectionManager> conn_manager)
+                            std::shared_ptr<ConnectionManager> conn_manager,
+                            std::shared_ptr<MessageManager> message_manager)
                 : ws_(std::move(socket)),
                   conn_manager_(conn_manager),
+                  message_manager_(message_manager),
                   session_id_(session_id),
                   conn_time_(c_time::now()),
                   last_activity_(conn_time_),
@@ -103,6 +106,7 @@ void ClientSession::on_read(error_code ec, std::size_t bytes_transfered){
     // 3. TODO: Parse received_payload_str to JSON
     try{
         json json_msg = json::parse(payload);
+        message_manager_->handle_json_message(shared_from_this(), json_msg["type"], json_msg["payload"]);
     }
     catch(const json::parse_error& ex){
         send_message("{\"type\":\"ERROR\", \"payload\":{\"code\":\"INVALID_JSON\", \"message\":\"" + std::string(ex.what()) + "\"}}");

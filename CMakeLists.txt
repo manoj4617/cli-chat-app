@@ -32,8 +32,11 @@ add_library(client_session STATIC
             src/ClientSession.cpp
             src/ClientSession.hpp
 )
+add_library(message_manager STATIC
+            src/MessageManager.cpp
+            src/MessageManager.hpp)
 
-target_link_libraries(client_session PRIVATE net)
+target_link_libraries(client_session PRIVATE net message_manager)
 target_compile_options(client_session PRIVATE ${COMMON_WARNINGS} ${SANITIZER_FLAGS})
 target_link_options(client_session PRIVATE ${SANITIZER_FLAGS})
 
@@ -60,6 +63,8 @@ target_compile_options(listener PRIVATE ${COMMON_WARNINGS} ${SANITIZER_FLAGS})
 target_link_options(listener PRIVATE ${SANITIZER_FLAGS})
 
 add_executable(cli-chat-server  src/main.cpp)
+#temp client bin
+add_executable(client src/test-client.cpp)
 target_link_libraries(listener PRIVATE connection_manager)
 
 

@@ -211,9 +211,9 @@ int main(int argc, char **argv)
     // Launch the asynchronous operation
     std::make_shared<session>(ioc)->run(host, port, text);
 
-    while(true){
-        std::cout << "$you ->  ";
-    }
+    // while(true){
+    //     std::cout << "$you ->  ";
+    // }
 
     // Run the I/O service. The call will return when
     // the socket is closed.

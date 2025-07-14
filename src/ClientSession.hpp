@@ -5,6 +5,8 @@
 #include <chrono>
 #include <deque>
 #include "net.hpp"
+#include "MessageManager.hpp"
+
 
 using c_time = std::chrono::steady_clock;
 class ConnectionManager;
@@ -26,6 +28,7 @@ class ClientSession : public std::enable_shared_from_this<ClientSession> {
         websocket::stream<beast::tcp_stream> ws_;
         beast::flat_buffer buffer_;
         std::weak_ptr<ConnectionManager> conn_manager_;
+        std::shared_ptr<MessageManager> message_manager_;
         SessionID session_id_;
         std::deque<std::string> write_msg_;
         bool is_writing_ = false;
@@ -41,7 +44,7 @@ class ClientSession : public std::enable_shared_from_this<ClientSession> {
         void update_last_activity();
         void do_actual_write();
     public:
-        explicit ClientSession(tcp::socket&&, ClientSession::SessionID, std::shared_ptr<ConnectionManager>);
+        explicit ClientSession(tcp::socket&&, ClientSession::SessionID, std::shared_ptr<ConnectionManager>, std::shared_ptr<MessageManager>);
         void run();
         void on_run();
         void on_accept(error_code);
