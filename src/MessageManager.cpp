@@ -9,5 +9,7 @@ void MessageManager::handle_json_message(std::shared_ptr<ClientSession> session,
         }
     }
 
-    
+    switch(type){
+
+    }
 }

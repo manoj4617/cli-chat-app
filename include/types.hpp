@@ -6,15 +6,15 @@
 #include <optional>
 
 struct UserAccount {
+    std::string user_id;
     std::string username;
     std::string password;
-    std::string user_id;
     std::string hashed_password;
     std::string salt;
 
     std::chrono::system_clock::time_point created_at;
-
-     UserAccount(std::string uid, std::string uname, std::string h_pass, std::string s,
+    UserAccount() = default;
+    UserAccount(std::string uid, std::string uname, std::string h_pass, std::string s,
                 std::chrono::system_clock::time_point created)
         : user_id(std::move(uid)), username(std::move(uname)),
           hashed_password(std::move(h_pass)), salt(std::move(s)),
@@ -29,7 +29,6 @@ struct Barrack{
     std::optional<std::string> hashed_password;
     std::optional<std::string> salt;   
     std::chrono::system_clock::time_point created_at;
-
      Barrack(std::string bid, std::string bname, std::string owner_uid, bool is_priv,
             std::optional<std::string> h_pass, std::optional<std::string> salt,
             std::chrono::system_clock::time_point created)

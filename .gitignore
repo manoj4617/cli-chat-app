@@ -3,3 +3,4 @@ boost/
 nlohmann/
 build/
 SQLiteCpp/
+*.o

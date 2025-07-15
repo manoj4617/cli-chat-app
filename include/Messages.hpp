@@ -105,7 +105,7 @@ class BaseMessage {
 struct AuthRequest : public BaseMessage {
     std::string username;
     std::string password;
-
+    bool create_user;
     AuthRequest() : BaseMessage(MessageType::AUTH_REQUEST){}
 };
 
@@ -147,7 +147,7 @@ struct PongMessage : public BaseMessage {
 struct AuthSuccess : public BaseMessage {
     std::string token;
     std::string user_id;
-
+    bool user_created;
     AuthSuccess() : BaseMessage(MessageType::AUTH_SUCCESS){}
 };
 

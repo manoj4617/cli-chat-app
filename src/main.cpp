@@ -1,7 +1,8 @@
-#include "Listener.hpp"
-#include "MessageManager.hpp"
-#include "AuthManager.hpp"
-#include "BarrackManager.hpp"
+#include <Listener.hpp>
+#include <MessageManager.hpp>
+#include <AuthManager.hpp>
+#include <BarrackManager.hpp>
+#include <DatabaseManager.hpp>
 #include <thread>
 
 int main(){
@@ -11,8 +12,11 @@ int main(){
     int thread_num = 4;
     std::cout << "[INFO] Starting char server on " << address << ":" << port << " with " << thread_num << " threads." << std::endl;
     net::io_context ioc{thread_num};
-    auto auth_manager = std::make_shared<AuthManager>();
-    auto barrack_manager = std::make_shared<BarrackManager>();
+
+    auto database = std::make_shared<DatabaseManager>("database.db3");
+
+    auto auth_manager = std::make_shared<AuthManager>(database);
+    auto barrack_manager = std::make_shared<BarrackManager>(database);
     auto message_manager = std::make_shared<MessageManager>(auth_manager, barrack_manager);
     auto conn_manager = std::make_shared<ConnectionManager>(message_manager);
 
