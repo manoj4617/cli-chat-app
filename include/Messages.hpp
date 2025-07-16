@@ -1,7 +1,7 @@
 #ifndef MESSAGES_H
 #define MESSAGES_H
 
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 #include <iostream>
 #include <chrono>
 #include <vector>

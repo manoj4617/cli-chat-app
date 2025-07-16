@@ -14,8 +14,10 @@ const std::variant<std::monostate, Error> SUCCESS_RESULT = std::monostate{};
 
 class DatabaseManager {
     public:
-        explicit DatabaseManager(const std::string& db_path) : db_(std::make_unique<SQLite::Database>(db_path)) {};
+        explicit DatabaseManager(const std::string& db_path);
         
+        Error initialize_database();
+        bool is_valid() const;
         //User operations
         std::variant<std::monostate, Error> create_user(const UserAccount& user);
         std::variant<UserAccount, Error> get_user_by_username(const std::string& username);
@@ -37,8 +39,8 @@ class DatabaseManager {
         std::vector<ChatMessage> get_barrack_messages(const std::string& barrack_id);
     
     private:
-        Error initialize_database();
         std::unique_ptr<SQLite::Database> db_;
+        bool is_initialized_;
 };
 
 #endif

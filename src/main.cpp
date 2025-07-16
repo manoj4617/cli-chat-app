@@ -1,9 +1,13 @@
+#include <cstdlib>
+#include <thread>
+#include <iostream>
+
 #include <Listener.hpp>
 #include <MessageManager.hpp>
 #include <AuthManager.hpp>
 #include <BarrackManager.hpp>
 #include <DatabaseManager.hpp>
-#include <thread>
+#include <Error.hpp>
 
 int main(){
     auto const address = net::ip::make_address("0.0.0.0");
@@ -13,7 +17,17 @@ int main(){
     std::cout << "[INFO] Starting char server on " << address << ":" << port << " with " << thread_num << " threads." << std::endl;
     net::io_context ioc{thread_num};
 
-    auto database = std::make_shared<DatabaseManager>("database.db3");
+    auto database = std::make_shared<DatabaseManager>("chat-server.db3");
+    if(!database->is_valid()){
+        std::cerr << "[FATAL] Could not initialize Database Manager. Shutting down." << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // Error schema_error = database->initialize_database();
+    // if(schema_error.code != ErrorCode::SUCCESS){
+    //     std::cerr << "[FATAL] " << schema_error.message << ". Shutting down." << std::endl;
+    //     return EXIT_FAILURE; // Exit if tables can't be created
+    // }
 
     auto auth_manager = std::make_shared<AuthManager>(database);
     auto barrack_manager = std::make_shared<BarrackManager>(database);

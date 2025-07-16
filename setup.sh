@@ -20,9 +20,12 @@ mkdir -p ../nlohmann
 mv json.hpp ../nlohmann/json.hpp
 
 echo "Downloading SQLiteCpp..."
-git clone --depth=1 https://github.com/SRombauts/SQLiteCpp.git
-cp -r SQLiteCpp/include/SQLiteCpp ../SQLiteCpp
-cp -r SQLiteCpp/sqlite3 ../SQLiteCpp/sqlite3
+if [ ! -d "SQLiteCpp" ]; then
+    git clone --depth=1 https://github.com/SRombauts/SQLiteCpp.git
+else
+    echo "SQLiteCpp directory already exists, skipping clone."
+fi
+cp -r SQLiteCpp ../
 
 echo "Cleaning up..."
 cd ..
