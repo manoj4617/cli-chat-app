@@ -12,10 +12,10 @@
 class AuthManager{
     public:
     using AuthResult = std::variant<std::string, Error>;
-        AuthManager(std::shared_ptr<DatabaseManager> db) : db_(db) {};
+        AuthManager(std::shared_ptr<DatabaseManager> db) : db_(db), gen_(rd_()) {};
 
         AuthResult authenticate_user(const std::string& username, const std::string& password);
-        AuthResult create_user(const std::string& username, const std::string& password, const std::string& user_id_out);
+        AuthResult create_user(const std::string& username, const std::string& password);
 
         std::string generate_auth_token(const std::string& user_id);
         AuthResult validate_token(const std::string& token);
@@ -27,7 +27,8 @@ class AuthManager{
     private:
         std::string hash_password(const std::string& passowrd);
         bool verify_password(const std::string& hashed_password, const std::string& stored_hash);
-        std::string genetate_user_id();
+        std::string generate_user_id();
+        std::string generate_salt();
 
         std::unordered_map<std::string, UserAccount> users_by_name_;    // username -> user account
         std::unordered_map<std::string, std::string> tokens_;           // username -> token
