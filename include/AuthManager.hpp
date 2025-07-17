@@ -22,7 +22,7 @@ class AuthManager{
         void invalidate_token(const std::string& token);
 
         std::string get_username(const std::string& user_id);
-        AuthResult user_exists(const std::string& username);
+        bool user_exists(const std::string& username);
 
     private:
         std::string hash_password(const std::string& passowrd);
