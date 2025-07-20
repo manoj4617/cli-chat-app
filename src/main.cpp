@@ -30,6 +30,7 @@ int main(){
     // }
 
     auto auth_manager = std::make_shared<AuthManager>(database);
+    AuthManager::initializeSodium();
     auto barrack_manager = std::make_shared<BarrackManager>(database);
     auto message_manager = std::make_shared<MessageManager>(auth_manager, barrack_manager);
     auto conn_manager = std::make_shared<ConnectionManager>(message_manager);

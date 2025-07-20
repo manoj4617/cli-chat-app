@@ -5,6 +5,11 @@ set -e
 mkdir -p third_party
 cd third_party
 
+echo "Installing libsodium..."
+sudo apt update
+sudo apt install pkg-config
+sudo apt install libsodium-dev
+
 echo "Downloading Boost headers..."
 BOOST_VERSION=1.88.0
 BOOST_VERSION_UNDERSCORE=${BOOST_VERSION//./_}

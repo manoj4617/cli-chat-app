@@ -36,6 +36,13 @@ set(SQLITECPP_BUILD_EXAMPLES OFF CACHE BOOL "Disable SQLiteCpp examples")
 set(SQLITECPP_BUILD_TESTS OFF CACHE BOOL "Disable SQLiteCpp tests")
 add_subdirectory(${CMAKE_SOURCE_DIR}/SQLiteCpp)
 
+# --- libsodium ---
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBSODIUM REQUIRED libsodium)
+
+include_directories(${LIBSODIUM_INCLUDE_DIRS})
+link_directories(${LIBSODIUM_LIB_DIRS})
+
 find_package(Threads REQUIRED)
 
 
@@ -102,6 +109,9 @@ target_link_libraries(database PRIVATE
 # `auth_manager` and `barrack_manager` depend on `database`
 target_link_libraries(auth_manager PRIVATE database)
 target_link_libraries(barrack_manager PRIVATE database)
+
+target_link_libraries(auth_manager PRIVATE ${LIBSODIUM_LIBRARIES})
+target_link_libraries(barrack_manager PRIVATE ${LIBSODIUM_LIBRARIES})
 
 # `message_manager` depends on auth and barrack managers
 target_link_libraries(message_manager PUBLIC
