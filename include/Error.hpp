@@ -12,6 +12,8 @@ enum ErrorCode {
     INVALID_PASSWORD,
     DATABASE_ERROR,
     INVALID_TOKEN,
+    INVALID_DATA,
+    INVALID_OWNER_ID, 
     // add as needed
 };
 

@@ -5,6 +5,8 @@
 #include <chrono>
 #include <optional>
 
+#define MIN_BARRAK_NAME_LEN 5
+
 struct UserAccount {
     std::string user_id;
     std::string username;

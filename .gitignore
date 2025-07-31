@@ -1,6 +1,9 @@
 .vscode/
+.cache/
 boost/
 nlohmann/
 build/
 SQLiteCpp/
 *.o
+
+compile_commands.json

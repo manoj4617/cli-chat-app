@@ -6,7 +6,7 @@
 #include <mutex>
 #include <random>
 #include <variant>
-#include <sodium.h>
+#include "Crypto.hpp"
 #include "DatabaseManager.hpp"
 #include "Error.hpp"
 
@@ -27,9 +27,9 @@ class AuthManager{
 
         static void initializeSodium();
     private:
+        std::string generate_user_id();
         std::string hash_password(const std::string& passowrd, const std::string& salt);
         bool verify_password(const std::string& hashed_password, const std::string& stored_hash);
-        std::string generate_user_id();
         std::string generate_salt();
 
         std::unordered_map<std::string, UserAccount> users_by_name_;    // username -> user account
@@ -41,10 +41,7 @@ class AuthManager{
         std::mutex mtx_;                                                // thread safety
         std::random_device rd_;
         std::mt19937 gen_;
-
-        static const int OPSLIMIT = crypto_pwhash_OPSLIMIT_INTERACTIVE;
-        static const size_t MEMLIMIT = crypto_pwhash_MEMLIMIT_INTERACTIVE;
-        static const size_t HASH_BYTES = crypto_pwhash_STRBYTES;
+        
         static const size_t AUTH_TOKEN_BYTES = 32;
         static const size_t UUID_BYTES = 16;
 };

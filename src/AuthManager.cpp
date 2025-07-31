@@ -112,20 +112,10 @@ bool AuthManager::user_exists(const std::string& username){
 }
 
 std::string AuthManager::generate_auth_token(const std::string& user_id){
-    unsigned char token_bytes[AUTH_TOKEN_BYTES];
-    randombytes_buf(token_bytes, sizeof(token_bytes)); 
-    
-    std::string token_hex(AUTH_TOKEN_BYTES * 2, '\0');
-    if (sodium_bin2hex(&token_hex[0], token_hex.length() + 1,
-                       token_bytes, sizeof(token_bytes)) == nullptr) {
-        throw std::runtime_error("Failed to convert random bytes to hex for token.");
-    }
+    std::string token_hex = Crypto::generate_auth_token(AUTH_TOKEN_BYTES);
     
     std::lock_guard<std::mutex> lock(mtx_);
     tokens_[user_id] = token_hex; 
-
-    sodium_memzero(token_bytes, sizeof(token_bytes)); 
-
     return token_hex;
 }
 
@@ -151,48 +141,17 @@ void AuthManager::invalidate_token(const std::string& token){
 }
 
 void AuthManager::initializeSodium(){
-    if(sodium_init() == -1){
-        throw std::runtime_error("libsodium initialization failed!");
-    }
+    Crypto::initialize();
 }
 
 std::string AuthManager::hash_password(const std::string& password, const std::string& salt){
-   if(salt.length() != crypto_pwhash_SALTBYTES * 2) {
-        throw std::invalid_argument("Invalid salt length. Salt must be " +
-                                    std::to_string(crypto_pwhash_SALTBYTES * 2) + " hexadecimal characters.");
-    }
-
-    unsigned char salt_bin[crypto_pwhash_SALTBYTES];
-    if(sodium_hex2bin(salt_bin, sizeof(salt_bin), 
-                    salt.c_str(), salt.length(), 
-                    nullptr, nullptr, nullptr) == 0){
-                        throw std::runtime_error("Failed to convert hex salt to binary");
-    }
-    
-    unsigned char hashed_password_cstr[HASH_BYTES];
-
-   if (crypto_pwhash(hashed_password_cstr, sizeof(hashed_password_cstr),
-                      password.c_str(), password.length(), // Password as C-string and its length
-                      salt_bin, // Binary salt
-                      OPSLIMIT, // Operations limit (CPU cost)
-                      MEMLIMIT, // Memory limit (RAM cost)
-                      crypto_pwhash_ALG_ARGON2ID13) != 0) { // Algorithm: Argon2id version 13
-        throw std::runtime_error("Password hashing failed.");
-    }
-
-    std::string hashed_password_str(reinterpret_cast<const char*>(hashed_password_cstr));
-    sodium_memzero(hashed_password_cstr, sizeof(hashed_password_cstr));
-    sodium_memzero(salt_bin, sizeof(salt_bin));
-    return hashed_password_str;
+   return Crypto::hash_password(password, salt);
 }
 
 std::string AuthManager::generate_salt(){
-    unsigned char salt[crypto_pwhash_SALTBYTES];
-    randombytes_buf(salt, sizeof salt);
-    std::string salt_str(crypto_pwhash_SALTBYTES * 2, '\0');
-    sodium_bin2hex(&salt_str[0], salt_str.length() + 1, salt, sizeof(salt));
-    return salt_str;
+    return Crypto::generate_salt();
 }
+
 
 std::string AuthManager::generate_user_id(){
     boost::uuids::random_generator generator;
@@ -204,12 +163,6 @@ std::string AuthManager::generate_user_id(){
 }
 
 bool AuthManager::verify_password(const std::string& password, const std::string& stored_hash){
-    if(password.empty()  || stored_hash.empty() ){
-        throw std::runtime_error("Invalid parameters for password verification");
-    }
-
-    int res = crypto_pwhash_str_verify(stored_hash.c_str(), password.c_str(), password.length());
-
-    return (res == 0);
+    return Crypto::verify_password(password, stored_hash);
 }
    

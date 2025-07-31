@@ -4,6 +4,7 @@
 #include <vector>
 #include <unordered_map>
 #include <mutex>
+#include <sodium.h>
 
 #include "DatabaseManager.hpp"
 #include "Error.hpp"
@@ -29,6 +30,10 @@ class BarrackManager{
         std::optional<std::vector<ChatMessage>> get_barrack_messages(const std::string& barrack_id);
 
     private:
+        std::string generate_barrack_id();
+        std::string hash_password(const std::string& passowrd, const std::string& salt);
+        bool verify_password(const std::string& hashed_password, const std::string& stored_hash);
+        std::string generate_salt();
         std::unordered_map<std::string, Barrack> barracks_;                                 // barrack id -> barrack
         std::unordered_map<std::string, std::vector<BarrackMember>> barracks_members_;      // barrack id -> members
         std::unordered_map<std::string, std::vector<ChatMessage>> barracks_messages_;       // barrack id -> messages
