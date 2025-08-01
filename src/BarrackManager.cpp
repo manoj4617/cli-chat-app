@@ -71,7 +71,7 @@ BarrackManager::BarrackResult BarrackManager::destroy_barrack(const std::string&
     return std::string("Barrack destroyed");
 }
 
-BarrackManager::MemberResult BarrackManager::join_barrack(const std::string &barrack_id, const std::string &user_id, std::optional<std::string> password){
+BarrackManager::StatusResult BarrackManager::join_barrack(const std::string &barrack_id, const std::string &user_id, std::optional<std::string> password){
     bool pass_result;
     if(barrack_id.empty() || user_id.empty() || password->empty()){
         return Error{ErrorCode::INVALID_DATA, "Invalid data"};
@@ -96,7 +96,37 @@ BarrackManager::MemberResult BarrackManager::join_barrack(const std::string &bar
         return std::get<Error>(join_result);
     }
 
-    return std::string("Joined barrack");
+    barracks_members_[barrack_id].emplace_back(barrack_id, user_id, Clock::now());
+    return SUCCESS;
+}
+
+
+BarrackManager::StatusResult BarrackManager::leave_barrack(const std::string &barrack_id, const std::string &user_id){
+    if(barrack_id.empty() || user_id.empty()){
+        return Error{ErrorCode::INVALID_DATA, "Invalid Data to"};
+    }
+
+    auto result = db_->get_barrack_by_id(barrack_id);
+    if(std::holds_alternative<Error>(result)){
+        return std::get<Error>(result);
+    }
+
+    auto barrack = std::get<Barrack>(result);
+    auto members = barracks_members_[barrack_id];
+    auto member_it = std::find_if(members.begin(), members.end(), 
+                [&user_id](const BarrackMember& member){
+                    return member.user_id == user_id;
+                });
+
+    if(member_it != members.end()){
+        auto leave_result = db_->leave_barrack(barrack_id, user_id);
+        if(std::holds_alternative<Error>(leave_result)){
+            return std::get<Error>(leave_result);
+        }
+        members.erase(member_it);
+        return SUCCESS;
+    }
+    return Error{ErrorCode::MEMBER_NOT_FOUND, "User is not member of this barrack"};
 }
 
 std::string BarrackManager::hash_password(const std::string& password, const std::string& salt){

@@ -61,7 +61,7 @@ public:
                                        password.length()) == 0);
     }
 
-    static std::string generate_random_hex(size_t bytes) {
+    static std::string generate_auth_token(size_t bytes) {
         unsigned char random_bytes[bytes];
         randombytes_buf(random_bytes, sizeof(random_bytes));
         

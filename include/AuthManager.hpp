@@ -12,7 +12,9 @@
 
 class AuthManager{
     public:
-    using AuthResult = std::variant<std::string, Error>;
+        using AuthResult = Result<std::string>;
+        using StatusResult = std::variant<Success, Error>;
+
         AuthManager(std::shared_ptr<DatabaseManager> db) : db_(db), gen_(rd_()) {};
 
         AuthResult authenticate_user(const std::string& username, const std::string& password);
