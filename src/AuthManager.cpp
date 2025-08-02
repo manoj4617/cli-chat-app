@@ -8,7 +8,7 @@
 #include <boost/uuid/uuid_io.hpp> 
 
 #include "AuthManager.hpp"
-#include "DatabaseManager.hpp"
+#include "UserRepo.hpp"
 #include "Messages.hpp"
 #include "types.hpp"
 
@@ -20,7 +20,7 @@ AuthManager::AuthResult AuthManager::authenticate_user(const std::string& userna
 
     try{
         
-        auto result = db_->get_user_by_username(username);
+        auto result = user_repo_->get_user_by_username(username);
         if(UserAccount* user_ptr = std::get_if<UserAccount>(&result)){
             UserAccount &user = *user_ptr;
 
@@ -50,7 +50,7 @@ AuthManager::AuthResult AuthManager::create_user(const std::string& username, co
     }
 
     try{
-        auto result = db_->get_user_by_username(username);
+        auto result = user_repo_->get_user_by_username(username);
         if(UserAccount* user_ptr = std::get_if<UserAccount>(&result)){
             return Error{ErrorCode::USER_ALREADY_EXISTS, "User already exists"};
         }
@@ -63,7 +63,7 @@ AuthManager::AuthResult AuthManager::create_user(const std::string& username, co
                          hashed_password,
                          salt,
                          std::chrono::system_clock::now());
-        auto create_result = db_->create_user(user);
+        auto create_result = user_repo_->create_user(user);
         if(std::holds_alternative<Error>(create_result)){
             return std::get<Error>(create_result);
         }
@@ -93,7 +93,7 @@ std::string AuthManager::get_username(const std::string& user_id){
     }
 
     try{
-        auto result = db_->get_user_by_id(user_id);
+        auto result = user_repo_->get_user_by_id(user_id);
         if(UserAccount* user_ptr = std::get_if<UserAccount>(&result)){
             UserAccount &user = *user_ptr;
             std::lock_guard<std::mutex> lock(mtx_);
@@ -138,10 +138,6 @@ void AuthManager::invalidate_token(const std::string& token){
             ++it;
         }
     }
-}
-
-void AuthManager::initializeSodium(){
-    Crypto::initialize();
 }
 
 std::string AuthManager::hash_password(const std::string& password, const std::string& salt){

@@ -1,7 +1,8 @@
-#include "DatabaseManager.hpp"
+#include "DatabaseConn.hpp"
 
-DatabaseManager::DatabaseManager(const std::string& db_path){
-    try {
+DatabaseConnection::DatabaseConnection(const std::string& db_path){
+
+     try {
         // Use flags to create the database if it doesn't exist
         int flags = SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE;
         db_ = std::make_unique<SQLite::Database>(db_path, flags);
@@ -18,6 +19,14 @@ DatabaseManager::DatabaseManager(const std::string& db_path){
     }
 }
 
-bool DatabaseManager::is_valid() const {
+std::shared_ptr<SQLite::Database> DatabaseConnection::get_connection() {
+    return db_;
+}
+
+bool DatabaseConnection::is_valid() const {
     return is_initialized_ && (db_ != nullptr);
+}
+
+Error DatabaseConnection::initialize_database() {
+   
 }

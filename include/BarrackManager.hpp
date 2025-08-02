@@ -6,23 +6,26 @@
 #include <mutex>
 #include <sodium.h>
 
-#include "DatabaseManager.hpp"
 #include "Error.hpp"
 #include <variant>
+#include "BarrackRepo.hpp"
+#include "MessageRepo.hpp"
 
 class BarrackManager{
     public:
         using BarrackResult = Result<std::string>;
         using StatusResult = std::variant<Success, Error>;
 
-        BarrackManager(std::shared_ptr<DatabaseManager> db) : db_(db) {};
+        BarrackManager(std::shared_ptr<BarrackRepository> barrack_repo,
+                        std::shared_ptr<MessageRepository> msg_repo) 
+            : barrack_repo_(barrack_repo), msg_repo_(msg_repo)  {};
 
         BarrackResult create_barrack(const std::string& barrack_name, const std::string& owner_uid, bool is_private, std::optional<std::string> password);
         BarrackResult destroy_barrack(const std::string& barrack_id, const std::string& owener_uid);
 
         StatusResult join_barrack(const std::string& barrack_id, const std::string& user_id, std::optional<std::string> password);
         StatusResult leave_barrack(const std::string& barrack_id, const std::string& user_id);
-        std::optional<std::string> message_barrack(const std::string& barrack_id, const std::string& user_id, const std::string& message);
+        StatusResult message_barrack(const std::string& barrack_id, const std::string& user_id, const std::string& message);
 
         std::optional<Barrack> get_barrack(const std::string& barrack_id);
         std::optional<BarrackMember> get_barrack_member(const std::string& barrack_id, const std::string& user_id);
@@ -31,6 +34,7 @@ class BarrackManager{
 
     private:
         std::string generate_barrack_id();
+        std::string generate_message_id();
         std::string hash_password(const std::string& passowrd, const std::string& salt);
         bool verify_password(const std::string& hashed_password, const std::string& stored_hash);
         std::string generate_salt();
@@ -40,7 +44,8 @@ class BarrackManager{
 
         std::mutex mtx_;
 
-        std::shared_ptr<DatabaseManager> db_;
+        std::shared_ptr<BarrackRepository> barrack_repo_;
+        std::shared_ptr<MessageRepository> msg_repo_;
 };
 
 #endif

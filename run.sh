@@ -40,6 +40,11 @@ echo ">> Building in $BUILD_DIR ($BUILD_TYPE mode)"
 # Configure with CMake
 cmake -S . -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
+if [ ! -f $BUILD_DIR/compile_commands.json ]; then
+    cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -S . -B build
+    ln -sf build/compile_commands.json .
+fi
+
 # Build
 cmake --build "$BUILD_DIR" -- -j$(nproc)
 

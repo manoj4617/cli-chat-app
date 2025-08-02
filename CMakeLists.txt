@@ -13,6 +13,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib64)
 set(COMMON_WARNINGS -Wall -Wextra -Wpedantic)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "Configuring Debug build with ASan and LeakSanitizer")
+    add_definitions(-DDEBUG)
     set(SANITIZER_FLAGS -fsanitize=address -g -O1 -fno-omit-frame-pointer)
 endif()
 
@@ -89,8 +90,16 @@ add_project_library(connection_manager
 add_project_library(listener
     src/Listener.cpp
 )
-add_project_library(database
-    src/DatabaseManager.cpp
+
+add_library(crypto_utils
+    src/Crypto.cpp
+)
+
+add_project_library(data_layer
+    src/DatabaseConn.cpp
+    src/UserRepo.cpp
+    src/BarrackRepo.cpp
+    src/MessageRepo.cpp
 )
 
 
@@ -100,18 +109,20 @@ add_project_library(database
 
 # `database` needs to link to SQLiteCpp's library and requires pthread.
 # The `SQLiteCpp` target from `add_subdirectory` handles its own dependencies correctly.
-target_link_libraries(database PRIVATE
+target_link_libraries(data_layer PRIVATE
     SQLiteCpp
     Threads::Threads 
     dl
 )
 
-# `auth_manager` and `barrack_manager` depend on `database`
-target_link_libraries(auth_manager PRIVATE database)
-target_link_libraries(barrack_manager PRIVATE database)
+target_link_libraries(crypto_utils PRIVATE 
+    ${LIBSODIUM_LIBRARIES}
+)
 
-target_link_libraries(auth_manager PRIVATE ${LIBSODIUM_LIBRARIES})
-target_link_libraries(barrack_manager PRIVATE ${LIBSODIUM_LIBRARIES})
+# `auth_manager` and `barrack_manager` depend on `database`
+target_link_libraries(auth_manager PRIVATE data_layer crypto_utils)
+target_link_libraries(barrack_manager PRIVATE data_layer crypto_utils)
+
 
 # `message_manager` depends on auth and barrack managers
 target_link_libraries(message_manager PUBLIC

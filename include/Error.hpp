@@ -18,6 +18,7 @@ enum ErrorCode {
     INVALID_DATA,
     INVALID_OWNER_ID,
     MEMBER_NOT_FOUND, 
+    BARRACK_NOT_FOUND,
     // add as needed
 };
 
@@ -38,7 +39,7 @@ struct Error{
             function_name(loc.function_name())
 #ifdef DEBUG
             , file_name(loc.file_name())
-            , line(loc.line())        
+            , line_number(loc.line())        
 #endif
         {}
 
@@ -46,7 +47,7 @@ struct Error{
 #ifdef DEBUG
             return "Error[" + std::to_string(static_cast<int>(code)) + "] in " +
                     function_name + " at " + file_name + ":" +
-                    std::to_string(line) + ": " + message;
+                    std::to_string(line_number) + ": " + message;
 #else
             return "Error[" + std::to_string(static_cast<int>(code)) + "] in " +
                     function_name + ": " + message;

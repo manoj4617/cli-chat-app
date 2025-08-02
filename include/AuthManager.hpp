@@ -7,15 +7,16 @@
 #include <random>
 #include <variant>
 #include "Crypto.hpp"
-#include "DatabaseManager.hpp"
+#include "types.hpp"
 #include "Error.hpp"
+#include "UserRepo.hpp"
 
 class AuthManager{
     public:
         using AuthResult = Result<std::string>;
         using StatusResult = std::variant<Success, Error>;
 
-        AuthManager(std::shared_ptr<DatabaseManager> db) : db_(db), gen_(rd_()) {};
+        AuthManager(std::shared_ptr<UserRepository> user_repo) : user_repo_(user_repo), gen_(rd_()) {};
 
         AuthResult authenticate_user(const std::string& username, const std::string& password);
         AuthResult create_user(const std::string& username, const std::string& password);
@@ -27,7 +28,6 @@ class AuthManager{
         std::string get_username(const std::string& user_id);
         bool user_exists(const std::string& username);
 
-        static void initializeSodium();
     private:
         std::string generate_user_id();
         std::string hash_password(const std::string& passowrd, const std::string& salt);
@@ -38,7 +38,7 @@ class AuthManager{
         std::unordered_map<std::string, std::string> tokens_;           // username -> token
         std::unordered_map<std::string, std::string> usernames_;        // user_id  -> username
 
-        std::shared_ptr<DatabaseManager> db_;
+        std::shared_ptr<UserRepository> user_repo_;
 
         std::mutex mtx_;                                                // thread safety
         std::random_device rd_;
