@@ -11,11 +11,11 @@ class ConnectionManager : public std::enable_shared_from_this<ConnectionManager>
     private:
         std::mutex mtx_;
         std::unordered_map<ClientSession::SessionID, std::shared_ptr<ClientSession>> sessions_;
-        std::shared_ptr<MessageManager> message_manager_;
+        std::shared_ptr<MessageDispatcher> message_dispatcher_;
         ClientSession::SessionID next_session_id_ = 1;
     public:
-        ConnectionManager(std::shared_ptr<MessageManager> message_manager) :
-            message_manager_(message_manager) {}
+        ConnectionManager(std::shared_ptr<MessageDispatcher> message_dispatcher) :
+            message_dispatcher_(message_dispatcher) {}
 
         void start_new_session(tcp::socket&&);
         void unregister_session(ClientSession::SessionID);

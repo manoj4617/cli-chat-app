@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include <Listener.hpp>
-#include <MessageManager.hpp>
+#include <MessageDispatcher.hpp>
 #include <AuthManager.hpp>
 #include <BarrackManager.hpp>
 #include <DatabaseConn.hpp>
@@ -37,8 +37,12 @@ int main(){
 
     auto auth_manager = std::make_shared<AuthManager>(user_repo);
     auto barrack_manager = std::make_shared<BarrackManager>(barrack_repo, message_repo);
-    auto message_manager = std::make_shared<MessageManager>(auth_manager, barrack_manager);
-    auto conn_manager = std::make_shared<ConnectionManager>(message_manager);
+    CommandContext command_context {
+        .auth_manager = auth_manager,
+        .barrack_manager = barrack_manager
+    };
+    auto message_dispatcher = std::make_shared<MessageDispatcher>(thread_num, command_context);
+    auto conn_manager = std::make_shared<ConnectionManager>(message_dispatcher);
 
     std::cout <<"[INFO] Initializing Listener" << std::endl;
     std::make_shared<Listener>(ioc, tcp::endpoint{address, port}, conn_manager)->run();

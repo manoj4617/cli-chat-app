@@ -67,34 +67,7 @@ function(add_project_library NAME)
     target_link_libraries(${NAME} PRIVATE project_common_properties)
 endfunction()
 
-# --- Core Libraries ---
-add_project_library(net
-    src/net.cpp
-)
-
-add_project_library(client_session
-    src/ClientSession.cpp
-)
-add_project_library(auth_manager
-    src/AuthManager.cpp
-)
-add_project_library(barrack_manager
-    src/BarrackManager.cpp
-)
-add_project_library(message_manager
-    src/MessageManager.cpp
-)
-add_project_library(connection_manager
-    src/ConnectionManager.cpp
-)
-add_project_library(listener
-    src/Listener.cpp
-)
-
-add_library(crypto_utils
-    src/Crypto.cpp
-)
-
+# --- Data Layer ---
 add_project_library(data_layer
     src/DatabaseConn.cpp
     src/UserRepo.cpp
@@ -102,55 +75,76 @@ add_project_library(data_layer
     src/MessageRepo.cpp
 )
 
-
-# ==============================================================================
-# === Library Dependencies (The Link Graph)
-# ==============================================================================
-
-# `database` needs to link to SQLiteCpp's library and requires pthread.
-# The `SQLiteCpp` target from `add_subdirectory` handles its own dependencies correctly.
+target_link_libraries(data_layer PUBLIC
+    SQLiteCpp 
+)
 target_link_libraries(data_layer PRIVATE
-    SQLiteCpp
-    Threads::Threads 
+    Threads::Threads
     dl
 )
 
+# --- Crypto --- #
+add_project_library(crypto_utils
+    src/Crypto.cpp
+)
 target_link_libraries(crypto_utils PRIVATE 
     ${LIBSODIUM_LIBRARIES}
 )
 
-# `auth_manager` and `barrack_manager` depend on `database`
+# --- Business Logic Managers ---
+add_project_library(auth_manager
+    src/AuthManager.cpp
+)
 target_link_libraries(auth_manager PRIVATE data_layer crypto_utils)
+
+add_project_library(barrack_manager
+    src/BarrackManager.cpp
+)
 target_link_libraries(barrack_manager PRIVATE data_layer crypto_utils)
 
+# --- Core Application & Networking Logic ---
 
-# `message_manager` depends on auth and barrack managers
-target_link_libraries(message_manager PUBLIC
+add_project_library(app_core
+    src/net.cpp
+    src/ClientSession.cpp
+    src/ConnectionManager.cpp
+    src/Listener.cpp
+    src/MessageDispatcher.cpp
+    src/commands/AuthCommands.cpp
+    src/commands/BarrackCommands.cpp
+    src/commands/CommandFactory.cpp
+)
+
+target_link_libraries(app_core PUBLIC
     auth_manager
     barrack_manager
+    project_common_properties
 )
-
-# `client_session` depends on net and message_manager
-target_link_libraries(client_session PRIVATE
-    net
-    message_manager
-)
-
-target_link_libraries(connection_manager PRIVATE client_session)
-target_link_libraries(listener PRIVATE connection_manager)
 
 
 # ==============================================================================
 # === Executables
 # ==============================================================================
-
 add_executable(cli-chat-server src/main.cpp)
 target_link_libraries(cli-chat-server PRIVATE
-    listener
-    project_common_properties
+    app_core
 )
 
+target_compile_options(data_layer PRIVATE ${COMMON_WARNINGS} ${SANITIZER_FLAGS})
+target_compile_options(crypto_utils PRIVATE ${COMMON_WARNINGS} ${SANITIZER_FLAGS})
+target_compile_options(auth_manager PRIVATE ${COMMON_WARNINGS} ${SANITIZER_FLAGS})
+target_compile_options(barrack_manager PRIVATE ${COMMON_WARNINGS} ${SANITIZER_FLAGS})
+target_compile_options(app_core PRIVATE ${COMMON_WARNINGS} ${SANITIZER_FLAGS})
+target_compile_options(cli-chat-server PRIVATE ${COMMON_WARNINGS} ${SANITIZER_FLAGS})
+
+target_include_directories(cli-chat-server PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(data_layer PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(crypto_utils PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(auth_manager PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(barrack_manager PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(app_core PUBLIC ${CMAKE_SOURCE_DIR}/include)
+
+
 add_executable(client src/test-client.cpp)
-target_link_libraries(client PRIVATE
-    project_common_properties
-)
+target_link_libraries(client PRIVATE project_common_properties)
+

@@ -13,20 +13,21 @@
 
 class AuthManager{
     public:
+        using AuthCreds = Result<std::pair<std::string, std::string>>;
         using AuthResult = Result<std::string>;
         using StatusResult = std::variant<Success, Error>;
 
         AuthManager(std::shared_ptr<UserRepository> user_repo) : user_repo_(user_repo), gen_(rd_()) {};
 
-        AuthResult authenticate_user(const std::string& username, const std::string& password);
-        AuthResult create_user(const std::string& username, const std::string& password);
+        AuthCreds authenticate_user(const std::string& username, const std::string& password);
+        AuthCreds create_user(const std::string& username, const std::string& password);
 
         std::string generate_auth_token(const std::string& user_id);
         AuthResult validate_token(const std::string& token);
         void invalidate_token(const std::string& token);
 
-        std::string get_username(const std::string& user_id);
-        bool user_exists(const std::string& username);
+        AuthResult get_username(const std::string& user_id);
+        bool user_exists(const std::string& user_id);
 
     private:
         std::string generate_user_id();

@@ -7,7 +7,7 @@ void ConnectionManager::start_new_session(tcp::socket&& socket){
         std::lock_guard<std::mutex> lock(mtx_);
         current_id = next_session_id_++;
         new_session = std::make_shared<ClientSession>(std::move(socket), current_id,
-                                                        shared_from_this(), message_manager_);
+                                                        shared_from_this(), message_dispatcher_);
         sessions_[current_id] = new_session;
     }
 

@@ -13,7 +13,7 @@
 #include "types.hpp"
 
 
-AuthManager::AuthResult AuthManager::authenticate_user(const std::string& username, const std::string& password){
+AuthManager::AuthCreds AuthManager::authenticate_user(const std::string& username, const std::string& password){
     if(username.empty() || password.empty()){
         return Error{ErrorCode::INVALID_CREDENTIALS, "Invalid Credentials"};
     }
@@ -32,7 +32,7 @@ AuthManager::AuthResult AuthManager::authenticate_user(const std::string& userna
             tokens_[user.user_id] = token;
             usernames_[user.user_id] = user.username;
             std::cout << "[INFO] User " << user.username << " authenticated successfully." << std::endl;
-            return token;
+            return std::make_pair(user.user_id, token);
         } else if(std::get_if<Error>(&result)){
             return Error{ErrorCode::INVALID_CREDENTIALS, "Invalid Credentials"};
         } else {
@@ -44,7 +44,7 @@ AuthManager::AuthResult AuthManager::authenticate_user(const std::string& userna
     }
 }
 
-AuthManager::AuthResult AuthManager::create_user(const std::string& username, const std::string& password){
+AuthManager::AuthCreds AuthManager::create_user(const std::string& username, const std::string& password){
     if(username.empty() || password.empty()){
         return Error{ErrorCode::INVALID_CREDENTIALS, "Invalid Credentials"};
     }
@@ -74,15 +74,15 @@ AuthManager::AuthResult AuthManager::create_user(const std::string& username, co
             tokens_[user.user_id] = token;
             usernames_[user.user_id] = username;
         }
-        return tokens_[user.user_id];
+        return std::make_pair(user.user_id,tokens_[user.user_id]);
     } catch(const std::exception& ex){
         return Error{ErrorCode::DATABASE_ERROR, ex.what()};
     }
 }
 
-std::string AuthManager::get_username(const std::string& user_id){
+AuthManager::AuthResult AuthManager::get_username(const std::string& user_id){
     if(user_id.empty()){
-        return "";
+        return Error{ErrorCode::INVALID_DATA, "Invalid data"};
     }
     {
         std::lock_guard<std::mutex> lock(mtx_);
@@ -100,15 +100,17 @@ std::string AuthManager::get_username(const std::string& user_id){
             usernames_[user_id] = user.username;
             return user.username;
         }
-        return "";
+        return Error{ErrorCode::USER_NOT_FOUND, "User not found"};
     } catch(const std::exception& ex){
         std::cerr << "Database error: " << ex.what() << std::endl;
-        return "";
+        std::string msg = std::string("Database error: ") + ex.what();
+        return Error{ErrorCode::DATABASE_ERROR, msg};
     }
 }
 
-bool AuthManager::user_exists(const std::string& username){
-    return (get_username(username) != "");
+bool AuthManager::user_exists(const std::string& user_id){
+    auto res = get_username(user_id);
+    return std::holds_alternative<Error>(res); 
 }
 
 std::string AuthManager::generate_auth_token(const std::string& user_id){

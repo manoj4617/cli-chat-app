@@ -5,7 +5,7 @@
 #include <chrono>
 #include <deque>
 #include "net.hpp"
-#include "MessageManager.hpp"
+#include "MessageDispatcher.hpp"
 
 
 using c_time = std::chrono::steady_clock;
@@ -28,7 +28,7 @@ class ClientSession : public std::enable_shared_from_this<ClientSession> {
         websocket::stream<beast::tcp_stream> ws_;
         beast::flat_buffer buffer_;
         std::weak_ptr<ConnectionManager> conn_manager_;
-        std::shared_ptr<MessageManager> message_manager_;
+        std::weak_ptr<MessageDispatcher> message_dispatcher_;
         SessionID session_id_;
         std::deque<std::string> write_msg_;
         bool is_writing_ = false;
@@ -39,12 +39,13 @@ class ClientSession : public std::enable_shared_from_this<ClientSession> {
         c_time::time_point last_activity_;
         ConnStatus status_;
         std::string authenticated_user_id_;
+        std::atomic<uint64_t> next_sequence_id_{0};
 
         void close_session(websocket::close_reason = {});
         void update_last_activity();
         void do_actual_write();
     public:
-        explicit ClientSession(tcp::socket&&, ClientSession::SessionID, std::shared_ptr<ConnectionManager>, std::shared_ptr<MessageManager>);
+        explicit ClientSession(tcp::socket&&, ClientSession::SessionID, std::shared_ptr<ConnectionManager>, std::shared_ptr<MessageDispatcher>);
         void run();
         void on_run();
         void on_accept(error_code);
@@ -62,6 +63,7 @@ class ClientSession : public std::enable_shared_from_this<ClientSession> {
         
         c_time::time_point get_connection_time() const { return conn_time_; }
         c_time::time_point get_last_activity_time() const { return last_activity_; }
+        uint64_t get_next_sequence_id() { return next_sequence_id_++;}
         /* getters */
 
         /* setters */
