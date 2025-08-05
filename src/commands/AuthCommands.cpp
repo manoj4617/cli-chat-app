@@ -2,7 +2,7 @@
 #include "Messages.hpp"
 #include "ClientSession.hpp"
 
-CreateUserCommand::CreateUserCommand  (const nlohmann::json& payload){
+CreateUserCommand::CreateUserCommand(const nlohmann::json& payload){
     username_ = payload.value("username", "");
     password_ = payload.value("password", "");
 }

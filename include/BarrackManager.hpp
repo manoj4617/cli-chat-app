@@ -21,7 +21,7 @@ class BarrackManager{
             : barrack_repo_(barrack_repo), msg_repo_(msg_repo)  {};
 
         BarrackResult create_barrack(const std::string& barrack_name, const std::string& owner_uid, bool is_private, std::optional<std::string> password);
-        BarrackResult destroy_barrack(const std::string& barrack_id, const std::string& owener_uid);
+        StatusResult destroy_barrack(const std::string& barrack_id, const std::string& owener_uid);
 
         StatusResult join_barrack(const std::string& barrack_id, const std::string& user_id, std::optional<std::string> password);
         StatusResult leave_barrack(const std::string& barrack_id, const std::string& user_id);

@@ -12,6 +12,7 @@ enum MessageType{
     AUTH_REQUEST,
     SEND_MESSAGE_REQUEST,
     CREATE_BARRACK_REQUEST,
+    DESTROY_BARRACK_REQUEST,
     JOIN_BARRACK_REQUEST,
     LEAVE_BARRACK_REQUEST,
     LIST_BARRACK_REQUEST,
@@ -23,6 +24,8 @@ enum MessageType{
     RECEIVE_MESSAGE_BROADCAST,
     CREATE_BARRACK_SUCCESS,
     CREATE_BARRACK_FAILURE,
+    DESTROY_BARRACK_SUCCESS,
+    DESTROY_BARRACK_FAILURE,
     JOIN_BARRACK_SUCCESS,
     JOIN_BARRACK_FAILURE,
     LEAVE_BARRACK_SUCCESS,
@@ -49,6 +52,8 @@ inline std::string message_type_to_string(MessageType type){
         case MessageType::RECEIVE_MESSAGE_BROADCAST: return std::string("RECEIVE_MESSAGE_BROADCAST");
         case MessageType::CREATE_BARRACK_SUCCESS: return std::string("CREATE_BARRACK_SUCCESS");
         case MessageType::CREATE_BARRACK_FAILURE: return std::string("CREATE_BARRACK_FAILURE"); 
+        case MessageType::DESTROY_BARRACK_SUCCESS: return std::string("DESTROY_BARRACK_SUCCESS");
+        case MessageType::DESTROY_BARRACK_FAILURE: return std::string("DESTROY_BARRACK_FAILURE");
         case MessageType::JOIN_BARRACK_SUCCESS: return std::string("JOIN_BARRACK_SUCCESS");
         case MessageType::JOIN_BARRACK_FAILURE: return std::string("JOIN_BARRACK_FAILURE");
         case MessageType::LEAVE_BARRACK_SUCCESS: return std::string("LEAVE_BARRACK_SUCCESS"); 
@@ -75,6 +80,8 @@ inline MessageType string_to_message_type(const std::string& type_str) {
     else if (type_str == "RECEIVE_MESSAGE_BROADCAST") return MessageType::RECEIVE_MESSAGE_BROADCAST;
     else if (type_str == "CREATE_BARRACK_SUCCESS") return MessageType::CREATE_BARRACK_SUCCESS;
     else if (type_str == "CREATE_BARRACK_FAILURE") return MessageType::CREATE_BARRACK_FAILURE;
+    else if (type_str == "DESTROY_BARRACK_SUCCESS") return MessageType::DESTROY_BARRACK_SUCCESS;
+    else if (type_str == "DESTROY_BARRACK_FAILURE") return MessageType::DESTROY_BARRACK_FAILURE;
     else if (type_str == "JOIN_BARRACK_SUCCESS") return MessageType::JOIN_BARRACK_SUCCESS;
     else if (type_str == "JOIN_BARRACK_FAILURE") return MessageType::JOIN_BARRACK_FAILURE;
     else if (type_str == "LEAVE_BARRACK_SUCCESS") return MessageType::LEAVE_BARRACK_SUCCESS;
@@ -177,7 +184,7 @@ struct ReceiveMessageBroadcast : public BaseMessage {
 struct CreateBarrackSuccess : public BaseMessage {
     std::string error_code_str;
     std::string message;
-
+    std::string barrack_id;
     CreateBarrackSuccess() : BaseMessage(MessageType::CREATE_BARRACK_SUCCESS){}
 };
 

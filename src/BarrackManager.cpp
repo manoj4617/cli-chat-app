@@ -47,7 +47,7 @@ BarrackManager::BarrackResult BarrackManager::create_barrack(const std::string& 
     return b_id;
 }
 
-BarrackManager::BarrackResult BarrackManager::destroy_barrack(const std::string& barrack_id, const std::string& owner_id){
+BarrackManager::StatusResult BarrackManager::destroy_barrack(const std::string& barrack_id, const std::string& owner_id){
     if(barrack_id.empty() || owner_id.empty()){
         return Error{ErrorCode::INVALID_DATA, "Invalid data"};
     }
@@ -70,7 +70,7 @@ BarrackManager::BarrackResult BarrackManager::destroy_barrack(const std::string&
     barracks_members_.erase(barrack_id);
     barracks_messages_.erase(barrack_id);
 
-    return std::string("Barrack destroyed");
+    return SUCCESS;
 }
 
 BarrackManager::StatusResult BarrackManager::join_barrack(const std::string &barrack_id, const std::string &user_id, std::optional<std::string> password){

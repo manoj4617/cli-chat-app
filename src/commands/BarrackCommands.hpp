@@ -16,9 +16,9 @@ class CreateBarrackCommand : public ICommand {
         std::optional<std::string> password_;
 };
 
-class DestroyBarracKCommand : public ICommand {
+class DestroyBarrackCommand : public ICommand {
     public:
-        explicit DestroyBarracKCommand(const nlohmann::json& payload);
+        explicit DestroyBarrackCommand(const nlohmann::json& payload);
         void execute(std::shared_ptr<ClientSession> session, const CommandContext& contex) override;
 
     private:
