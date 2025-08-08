@@ -24,7 +24,7 @@ class MessageDispatcher{
         };
         CommandFactory commandFactory;
         CommandContext commandContext;
-        ConcurrentQueue<CommandTask> command_queue;
+        std::unique_ptr<ConcurrentQueue<CommandTask>> command_queue;
         std::vector<std::thread> workers_;
         bool done_ = false;
 };

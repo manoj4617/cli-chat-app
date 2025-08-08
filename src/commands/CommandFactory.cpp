@@ -11,7 +11,7 @@ CommandFactory::CommandFactory(){
     register_command("GETUSER", [](const nlohmann::json& p){ return std::make_unique<GetUsernameCommand>(p); });
     register_command("JOINBARRACK", [](const nlohmann::json& p){ return std::make_unique<JoinBarrackCommand>(p); });
     register_command("CREATEBARRACK", [](const nlohmann::json& p){ return std::make_unique<CreateBarrackCommand>(p); });
-    register_command("DESTROYBARRACK", [](const nlohmann::json& p){ return std::make_unique<DestroyBarracKCommand>(p); });
+    register_command("DESTROYBARRACK", [](const nlohmann::json& p){ return std::make_unique<DestroyBarrackCommand>(p); });
     register_command("LEAVEBARRACK", [](const nlohmann::json& p){ return std::make_unique<LeaveBarrackCommand>(p); });
     register_command("MESSAGEBARRACK", [](const nlohmann::json& p){ return std::make_unique<MessageBarrackCommand>(p); });
     register_command("GETBARRACKMEMBER", [](const nlohmann::json& p){ return std::make_unique<GetBarrackMemberCommand>(p); });

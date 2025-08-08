@@ -249,3 +249,81 @@ void GetBarrackMembersCommand::execute(std::shared_ptr<ClientSession> session, c
         session->send_message(response.dump());
     }
 }
+
+
+GetBarrackMessagesCommand::GetBarrackMessagesCommand(const nlohmann::json& payload){
+    barrack_id_ = payload.value("barrack_id", "");
+}
+
+void GetBarrackMessagesCommand::execute(std::shared_ptr<ClientSession> session, const CommandContext &context){
+    auto result = context.barrack_manager->get_barrack_messages(barrack_id_);
+
+    if(result == std::nullopt){
+        nlohmann::json response = {
+            {"type", message_type_to_string(MessageType::GET_BARRACK_MESSAGES_FAILURE)},
+            {"sequence_id", session->get_next_sequence_id()},
+            {"payload", {
+                {"error_code", message_type_to_string(MessageType::GET_BARRACK_MESSAGES_FAILURE)},
+                {"message", "Messages not found"}
+            }}
+        };
+        session->send_message(response.dump());
+    }
+    else {
+        std::vector<nlohmann::json> messages_json;
+        for(const auto& message : *result){
+            messages_json.push_back(
+              {
+                {"barrack_id", message.barrack_id},
+                {"user_id", message.sender_user_id},
+                {"message", message.content},
+                {"created_at", std::chrono::system_clock::to_time_t(message.sent_at)} 
+              }  
+            );
+        }
+        nlohmann::json response = {
+            {"type", message_type_to_string(MessageType::GET_BARRACK_MESSAGES_SUCCESS)},
+            {"sequence_id", session->get_next_sequence_id()},
+            {"payload", {
+                {"message", "Barrack messages fetched successfully"},
+                {"messages", messages_json}
+            }}
+        };
+        session->send_message(response.dump());
+    }
+}
+
+GetBarrackCommand::GetBarrackCommand(const nlohmann::json& payload){
+    barrack_id_ = payload.value("barrack_id", "");
+}
+
+void GetBarrackCommand::execute(std::shared_ptr<ClientSession> session, const CommandContext &context){
+    auto result = context.barrack_manager->get_barrack(barrack_id_);
+
+    if(result == std::nullopt){
+        nlohmann::json response = {
+            {"type", message_type_to_string(MessageType::GET_BARRACK_FAILURE)},
+            {"sequence_id", session->get_next_sequence_id()},
+            {"payload", {
+                {"error_code", message_type_to_string(MessageType::GET_BARRACK_FAILURE)},
+                {"message", "Barrack not found"}
+            }}
+        };
+        session->send_message(response.dump());
+    }
+    else {
+        nlohmann::json response = {
+            {"type", message_type_to_string(MessageType::GET_BARRACK_SUCCESS)},
+            {"sequence_id", session->get_next_sequence_id()},
+            {"payload", {
+                {"message", "Barrack fetched successfully"},
+                {"barrack_id", result->barrack_id},
+                {"name", result->barrack_name},
+                {"admin_id", result->admin_id},
+                {"created_at", std::chrono::system_clock::to_time_t(result->created_at)},
+                {"is_private", result->is_private},
+            }}
+        };        
+        session->send_message(response.dump());
+    }
+}

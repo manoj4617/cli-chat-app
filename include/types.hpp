@@ -21,6 +21,7 @@ struct UserAccount {
         : user_id(std::move(uid)), username(std::move(uname)),
           hashed_password(std::move(h_pass)), salt(std::move(s)),
           created_at(created) {}
+    virtual ~UserAccount() = default;
 };
 
 struct Barrack{
@@ -40,6 +41,8 @@ struct Barrack{
           created_at(created) {}
 
     Barrack() = default;
+
+    virtual ~Barrack() = default;
 };
 
 
@@ -52,6 +55,7 @@ struct BarrackMember {
         : barrack_id(std::move(bid)), user_id(std::move(uid)), joined_at(joined) {}
 
     BarrackMember() = default;
+    virtual ~BarrackMember() = default;
 };
 
 struct ChatMessage {
@@ -67,5 +71,6 @@ struct ChatMessage {
           sender_user_id(std::move(sid)), content(std::move(msg_content)), sent_at(sent) {}
 
     ChatMessage() = default;
+    virtual ~ChatMessage() = default;
 };
 #endif
