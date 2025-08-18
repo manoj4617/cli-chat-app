@@ -45,7 +45,7 @@ include_directories(${LIBSODIUM_INCLUDE_DIRS})
 link_directories(${LIBSODIUM_LIB_DIRS})
 
 find_package(Threads REQUIRED)
-
+find_library(CASS_LIB cassandra REQUIRED)
 
 # ==============================================================================
 # === Project Libraries
@@ -76,7 +76,8 @@ add_project_library(data_layer
 )
 
 target_link_libraries(data_layer PUBLIC
-    SQLiteCpp 
+    SQLiteCpp
+    ${CASS_LIB}
 )
 target_link_libraries(data_layer PRIVATE
     Threads::Threads

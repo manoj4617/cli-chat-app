@@ -8,6 +8,35 @@
 #include "Error.hpp"
 
 
+#define CREATE_USERS_TABLE \
+    "CREATE TABLE IF NOT EXISTS users (" \
+    "user_id TEXT PRIMARY KEY, " \
+    "username TEXT UNIQUE NOT NULL, " \
+    "hashed_password TEXT NOT NULL, " \
+    "salt TEXT NOT NULL, " \
+    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"
+
+#define CREATE_BARRACKS_TABLE \
+    "CREATE TABLE IF NOT EXISTS barracks (" \
+    "barrack_id TEXT PRIMARY KEY, " \
+    "name TEXT UNIQUE NOT NULL, " \
+    "admin_id TEXT NOT NULL, " \
+    "is_private BOOLEAN DEFAULT FALSE, " \
+    "hashed_password TEXT, " \
+    "salt TEXT, " \
+    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " \
+    "FOREIGN KEY (admin_id) REFERENCES users(user_id));"
+
+#define CREATE_BARRACK_MEMBERS_TABLE \
+    "CREATE TABLE IF NOT EXISTS barrack_members (" \
+    "barrack_id TEXT NOT NULL, " \
+    "user_id TEXT NOT NULL, " \
+    "joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " \
+    "PRIMARY KEY (barrack_id, user_id), " \
+    "FOREIGN KEY (barrack_id) REFERENCES barracks(barrack_id), " \
+    "FOREIGN KEY (user_id) REFERENCES users(user_id));"
+
+
 class DatabaseConnection {
     public:
         explicit DatabaseConnection(const std::string& db_path);

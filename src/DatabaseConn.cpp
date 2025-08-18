@@ -28,5 +28,18 @@ bool DatabaseConnection::is_valid() const {
 }
 
 Error DatabaseConnection::initialize_database() {
-   
+   // check if database already exists
+    try {
+        std::lock_guard<std::mutex> lock(mtx_);
+        auto db = get_connection();
+
+        db->exec(CREATE_USERS_TABLE);
+        db->exec(CREATE_BARRACKS_TABLE);
+        db->exec(CREATE_BARRACK_MEMBERS_TABLE);
+
+        is_initialized_ = true;
+        return {};
+    } catch (const std::exception& ex) {
+        return Error{ErrorCode::DATABASE_ERROR, ex.what()};
+    }
 }
