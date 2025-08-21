@@ -8,8 +8,8 @@
 #include <BarrackManager.hpp>
 #include <DatabaseConn.hpp>
 #include <UserRepo.hpp>
-#include <MessageRepo.hpp>
 #include <BarrackRepo.hpp>
+#include <CassandraMessageRepo.hpp>
 #include <Error.hpp>
 
 int main(){
@@ -20,6 +20,7 @@ int main(){
     std::cout << "[INFO] Starting char server on " << address << ":" << port << " with " << thread_num << " threads." << std::endl;
     net::io_context ioc{thread_num};
 
+    auto cass_db = std::make_shared<CassandraMessageRepo>(std::make_shared<CassandraConnection>());
     auto database = std::make_shared<DatabaseConnection>("chat-server.db3");
     if(!database->is_valid()){
         std::cerr << "[FATAL] Could not initialize Database Manager. Shutting down." << std::endl;
@@ -33,10 +34,9 @@ int main(){
     // }
     auto user_repo = std::make_shared<UserRepository>(database->get_connection());
     auto barrack_repo = std::make_shared<BarrackRepository>(database->get_connection());
-    auto message_repo = std::make_shared<MessageRepository>(database->get_connection());
 
     auto auth_manager = std::make_shared<AuthManager>(user_repo);
-    auto barrack_manager = std::make_shared<BarrackManager>(barrack_repo, message_repo);
+    auto barrack_manager = std::make_shared<BarrackManager>(barrack_repo, cass_db);
     CommandContext command_context {
         .auth_manager = auth_manager,
         .barrack_manager = barrack_manager

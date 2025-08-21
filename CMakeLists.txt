@@ -72,7 +72,7 @@ add_project_library(data_layer
     src/DatabaseConn.cpp
     src/UserRepo.cpp
     src/BarrackRepo.cpp
-    src/MessageRepo.cpp
+    src/CassandraMessageRepo.cpp
 )
 
 target_link_libraries(data_layer PUBLIC
