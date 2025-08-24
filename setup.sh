@@ -5,6 +5,12 @@ set -e
 mkdir -p third_party
 cd third_party
 
+echo "Is Java 11 installed ?"
+if ! java -version 2>&1 | awk -F '"' '/version/ {print $2}' | grep -E "^11"; then
+    echo "❌ Java 11 is not installed or not set as the default. Please install Java 11 and try again."
+    exit 1
+fi
+echo "✅ Java 11 is installed."
 
 echo "Adding Cassandra repository..."
 sudo mkdir -p /etc/apt/keyrings
