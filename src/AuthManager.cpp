@@ -51,7 +51,7 @@ AuthManager::AuthCreds AuthManager::create_user(const std::string& username, con
 
     try{
         auto result = user_repo_->get_user_by_username(username);
-        if(UserAccount* user_ptr = std::get_if<UserAccount>(&result)){
+        if(std::get_if<UserAccount>(&result)){
             return Error{ErrorCode::USER_ALREADY_EXISTS, "User already exists"};
         }
         std::string salt = generate_salt();

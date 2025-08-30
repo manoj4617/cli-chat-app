@@ -21,6 +21,7 @@ int main(){
     net::io_context ioc{thread_num};
 
     auto cass_db = std::make_shared<CassandraMessageRepo>(std::make_shared<CassandraConnection>());
+    cass_db->init_database();
     auto database = std::make_shared<DatabaseConnection>("chat-server.db3");
     if(!database->is_valid()){
         std::cerr << "[FATAL] Could not initialize Database Manager. Shutting down." << std::endl;

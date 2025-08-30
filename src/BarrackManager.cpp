@@ -1,5 +1,6 @@
+#include <atomic>
 #include <chrono>
-#include <new>
+#include <mutex>
 #include <optional>
 #include <string>
 
@@ -14,6 +15,21 @@
 #include "types.hpp"
 
 using Clock = std::chrono::system_clock;
+
+void BarrackManager::dispatch_cass_message(){
+    while (auto msg_optional = message_queue_.wait_and_pop()) {
+        ChatMessage& msg_to_db = *msg_optional;
+
+        auto res = msg_repo_->add(msg_to_db);
+        if (std::holds_alternative<Error>(res)) {
+            std::cerr << "Chat messages insertion to database failed for message ID: "
+                      << msg_to_db.message_id << std::endl;
+        } else {
+            std::cout << "Message ID: " << msg_to_db.message_id << " saved to database." << std::endl;
+        }
+    }
+    std::cout << "Message dispatcher thread finished." << std::endl;
+}
 
 BarrackManager::BarrackResult BarrackManager::create_barrack(const std::string& barrack_name, 
                                                              const std::string& owner_id,
@@ -45,6 +61,13 @@ BarrackManager::BarrackResult BarrackManager::create_barrack(const std::string& 
         return std::get<Error>(result);
     }
     return b_id;
+}
+
+BarrackManager::~BarrackManager(){
+    message_queue_.shutdown();
+    if(message_dispatcher_.joinable()){
+        message_dispatcher_.join();
+    }
 }
 
 BarrackManager::StatusResult BarrackManager::destroy_barrack(const std::string& barrack_id, const std::string& owner_id){
@@ -154,12 +177,10 @@ BarrackManager::StatusResult BarrackManager::message_barrack(const std::string &
                     user_id,
                     message,
                     Clock::now());
-                
-    auto result = msg_repo_->add(msg);
+               
+    barracks_messages_[barrack_id].push_back(msg);
+    message_queue_.push(std::move(msg));
 
-    if(std::holds_alternative<Error>(result)){
-        return std::get<Error>(result);
-    }
     return SUCCESS;
 }
 

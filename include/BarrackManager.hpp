@@ -1,15 +1,18 @@
 #ifndef BARRACK_MANAGER_H
 #define BARRACK_MANAGER_H
 
+#include <thread>
 #include <vector>
 #include <unordered_map>
 #include <mutex>
 #include <sodium.h>
 
+#include "ConcurrentQueue.hpp"
 #include "Error.hpp"
 #include <variant>
 #include "BarrackRepo.hpp"
 #include "MessageRepo.hpp"
+#include "types.hpp"
 
 class BarrackManager{
     public:
@@ -18,8 +21,10 @@ class BarrackManager{
 
         BarrackManager(std::shared_ptr<BarrackRepository> barrack_repo,
                         std::shared_ptr<MessageRepository> msg_repo) 
-            : barrack_repo_(barrack_repo), msg_repo_(msg_repo)  {};
-
+            : barrack_repo_(barrack_repo), msg_repo_(msg_repo)  {
+                message_dispatcher_ = std::thread(&BarrackManager::dispatch_cass_message, this);
+            }
+        ~BarrackManager();
         BarrackResult create_barrack(const std::string& barrack_name, const std::string& owner_uid, bool is_private, std::optional<std::string> password);
         StatusResult destroy_barrack(const std::string& barrack_id, const std::string& owener_uid);
 
@@ -33,6 +38,7 @@ class BarrackManager{
         std::optional<std::vector<ChatMessage>> get_barrack_messages(const std::string& barrack_id);
 
     private:
+        
         std::string generate_barrack_id();
         std::string generate_message_id();
         std::string hash_password(const std::string& passowrd, const std::string& salt);
@@ -41,9 +47,11 @@ class BarrackManager{
         std::unordered_map<std::string, Barrack> barracks_;                                 // barrack id -> barrack
         std::unordered_map<std::string, std::vector<BarrackMember>> barracks_members_;      // barrack id -> members
         std::unordered_map<std::string, std::vector<ChatMessage>> barracks_messages_;       // barrack id -> messages
-
+        void dispatch_cass_message();
+            
+        ConcurrentQueue<ChatMessage> message_queue_;
         std::mutex mtx_;
-
+        std::thread message_dispatcher_;
         std::shared_ptr<BarrackRepository> barrack_repo_;
         std::shared_ptr<MessageRepository> msg_repo_;
 };

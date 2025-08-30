@@ -19,6 +19,15 @@ static constexpr const char* CREATE_MESSAGES_TABLE_QUERY =
         "    PRIMARY KEY (barrack_id, message_id)"
         ") WITH CLUSTERING ORDER BY (message_id DESC);";
 
+static constexpr const char* ADD_MESSAGE_TO_DATABASE = 
+        "INSERT INTO chat_app.messages "
+        "(barrack_id, message_id, sender_id, content, timestamp)"
+        "VALUES (?, ?, ?, ?, ?)";
+
+static constexpr const char* GET_MESSAGES = 
+        "SELECT barrack_id, message_id, sender_id, content, timestamp "
+        "FROM chat_app.messages WHERE barrack_id = ? LIMIT ?";
+
 struct CassandraConnection {
     CassCluster *cluster = nullptr;
     CassSession *session = nullptr;
@@ -45,6 +54,7 @@ class CassandraMessageRepo : public MessageRepository {
     private:
         std::shared_ptr<CassandraConnection> conn_;
         Result<std::monostate> execute_simple_query(const char* query);
+        bool prepare_statements();
         const CassPrepared* add_message_prepared_ = nullptr;
         const CassPrepared* get_message_prepared_ = nullptr;
 };
