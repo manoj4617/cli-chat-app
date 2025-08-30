@@ -11,6 +11,7 @@
 #include <BarrackRepo.hpp>
 #include <CassandraMessageRepo.hpp>
 #include <Error.hpp>
+#include <variant>
 
 int main(){
     auto const address = net::ip::make_address("0.0.0.0");
@@ -21,7 +22,11 @@ int main(){
     net::io_context ioc{thread_num};
 
     auto cass_db = std::make_shared<CassandraMessageRepo>(std::make_shared<CassandraConnection>());
-    cass_db->init_database();
+    auto res = cass_db->init_database();
+    if(std::holds_alternative<Error>(res)){
+        std::cerr << "[FATAL] Could not initialize Cassandra Database. Shutting down." << std::endl;
+        return EXIT_FAILURE;
+    }
     auto database = std::make_shared<DatabaseConnection>("chat-server.db3");
     if(!database->is_valid()){
         std::cerr << "[FATAL] Could not initialize Database Manager. Shutting down." << std::endl;
