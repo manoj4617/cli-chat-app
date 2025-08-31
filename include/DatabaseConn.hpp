@@ -14,7 +14,8 @@
     "username TEXT UNIQUE NOT NULL, " \
     "hashed_password TEXT NOT NULL, " \
     "salt TEXT NOT NULL, " \
-    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"
+    "created_at TEXT " \
+    ");"
 
 #define CREATE_BARRACKS_TABLE \
     "CREATE TABLE IF NOT EXISTS barracks (" \
@@ -24,8 +25,9 @@
     "is_private BOOLEAN DEFAULT FALSE, " \
     "hashed_password TEXT, " \
     "salt TEXT, " \
-    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " \
-    "FOREIGN KEY (admin_id) REFERENCES users(user_id));"
+    "created_at TEXT, " \
+    "FOREIGN KEY (admin_id) REFERENCES users(user_id)" \
+    ");"
 
 #define CREATE_BARRACK_MEMBERS_TABLE \
     "CREATE TABLE IF NOT EXISTS barrack_members (" \
@@ -33,9 +35,18 @@
     "user_id TEXT NOT NULL, " \
     "joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " \
     "PRIMARY KEY (barrack_id, user_id), " \
-    "FOREIGN KEY (barrack_id) REFERENCES barracks(barrack_id), " \
-    "FOREIGN KEY (user_id) REFERENCES users(user_id));"
+    "FOREIGN KEY (user_id) REFERENCES users(user_id), " \
+    "FOREIGN KEY (barrack_id) REFERENCES barracks(barrack_id) ON DELETE CASCADE " \
+    ");"
 
+
+#define CREATE_EVENT_OUTBOX_TABLE \
+    "CREATE TABLE IF NOT EXISTS event_outbox (" \
+    "event_id INTEGER PRIMARY KEY AUTOINCREMENT, " \
+    "event_type TEXT NOT NULL, "\
+    "payload TEXT NOT NULL, "\
+    "created_at TEXT NOT NULL "\
+    ");"
 
 class DatabaseConnection {
     public:

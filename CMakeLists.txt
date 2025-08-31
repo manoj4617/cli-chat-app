@@ -73,6 +73,8 @@ add_project_library(data_layer
     src/UserRepo.cpp
     src/BarrackRepo.cpp
     src/CassandraMessageRepo.cpp
+    src/EventRepository.cpp
+    src/OutboxRelay.cpp
 )
 
 target_link_libraries(data_layer PUBLIC

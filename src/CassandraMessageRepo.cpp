@@ -64,21 +64,23 @@ Result<std::monostate> CassandraMessageRepo::init_database(){
 bool CassandraMessageRepo::prepare_statements(){
      // Prepare statements
     
-    CassFuture* add_msg_future = cass_session_prepare(conn_->session, ADD_MESSAGE_TO_DATABASE);
-    CassFuture* get_message_future = cass_session_prepare(conn_->session, GET_MESSAGES);
-    CassError rc_2 = cass_future_error_code(get_message_future);
-    CassError rc_1 = cass_future_error_code(add_msg_future);
+    CassFuturePtr add_msg_future(cass_session_prepare(conn_->session, ADD_MESSAGE_TO_DATABASE), cass_future_free);
+    CassFuturePtr get_message_future(cass_session_prepare(conn_->session, GET_MESSAGES), cass_future_free);
+    CassFuturePtr delete_messages(cass_session_prepare(conn_->session, DELETE_BARRACK_MESSAGES), cass_future_free);
 
-    if(rc_1 != CASS_OK || rc_2 != CASS_OK){
+    CassError rc_1 = cass_future_error_code(add_msg_future.get());
+    CassError rc_2 = cass_future_error_code(get_message_future.get());
+    CassError rc_3 = cass_future_error_code(delete_messages.get());
+    if(rc_1 != CASS_OK || rc_2 != CASS_OK || rc_3 != CASS_OK){
         std::cerr << "[ERROR] Prepared statments creation failed: "
                   << cass_error_desc(rc_1) << std::endl ;
         return false;
     }
-    add_message_prepared_ = cass_future_get_prepared(add_msg_future);
-    get_message_prepared_ = cass_future_get_prepared(get_message_future);
 
-    cass_future_free(add_msg_future);
-    cass_future_free(get_message_future);
+    add_message_prepared_ = cass_future_get_prepared(add_msg_future.get());
+    get_message_prepared_ = cass_future_get_prepared(get_message_future.get());
+    delete_barrack_messages_prepared_ = cass_future_get_prepared(delete_messages.get());
+
     return true;
 }
 
@@ -187,6 +189,30 @@ Result<std::vector<ChatMessage>> CassandraMessageRepo::get_for_barrack(const std
     }
 
     return messages;
+}
+
+Result<std::monostate> CassandraMessageRepo::delete_barrack_messages(const std::string& barrack_id){
+    if(!delete_barrack_messages_prepared_){
+        return Error{ErrorCode::DATABASE_ERROR, "Delete messages statement is not prepared."};
+    }
+
+    CassStatementPtr statement(cass_prepared_bind(delete_barrack_messages_prepared_), cass_statement_free);
+    if(cass_statement_bind_string(statement.get(), 0, barrack_id.c_str())){
+        return Error{ErrorCode::DATABASE_ERROR, "Failed to bind barrack_id for deletion"};
+    }
+
+    CassFuturePtr future(cass_session_execute(conn_->session, statement.get()), cass_future_free);
+    cass_future_wait(future.get());
+
+    CassError rc = cass_future_error_code(future.get());
+    if(rc != CASS_OK){
+        const char* msg;
+        size_t len;
+        cass_future_error_message(future.get(), &msg, &len);
+        return Error{ErrorCode::DATABASE_ERROR, "Failed to delete barrack messages: " + std::string(msg, len)};
+    }
+
+    return Success{};
 }
 
 Result<std::monostate> CassandraMessageRepo::execute_simple_query(const char* query){

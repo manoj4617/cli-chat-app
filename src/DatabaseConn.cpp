@@ -36,7 +36,8 @@ Error DatabaseConnection::initialize_database() {
         db->exec(CREATE_USERS_TABLE);
         db->exec(CREATE_BARRACKS_TABLE);
         db->exec(CREATE_BARRACK_MEMBERS_TABLE);
-
+        db->exec(CREATE_EVENT_OUTBOX_TABLE);
+        
         is_initialized_ = true;
         return {};
     } catch (const std::exception& ex) {

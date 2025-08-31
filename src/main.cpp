@@ -10,6 +10,8 @@
 #include <UserRepo.hpp>
 #include <BarrackRepo.hpp>
 #include <CassandraMessageRepo.hpp>
+#include <EventRepository.hpp>
+#include <OutboxRelay.hpp>
 #include <Error.hpp>
 #include <variant>
 
@@ -24,7 +26,7 @@ int main(){
     auto cass_db = std::make_shared<CassandraMessageRepo>(std::make_shared<CassandraConnection>());
     auto res = cass_db->init_database();
     if(std::holds_alternative<Error>(res)){
-        std::cerr << "[FATAL] Could not initialize Cassandra Database. Shutting down." << std::endl;
+        std::cerr << "[FATAL] Could not initialize Cassandra Database." << std::get<Error>(res).what_happened() << " Shutting down." << std::endl;
         return EXIT_FAILURE;
     }
     auto database = std::make_shared<DatabaseConnection>("chat-server.db3");
@@ -33,13 +35,17 @@ int main(){
         return EXIT_FAILURE;
     }
 
-    // Error schema_error = database->initialize_database();
-    // if(schema_error.code != ErrorCode::SUCCESS){
-    //     std::cerr << "[FATAL] " << schema_error.message << ". Shutting down." << std::endl;
-    //     return EXIT_FAILURE; // Exit if tables can't be created
-    // }
+    Error schema_error = database->initialize_database();
+    if(schema_error.code != ErrorCode::SUCCESSFUL){
+        std::cerr << "[FATAL] " << schema_error.what_happened() << ". Shutting down." << std::endl;
+        return EXIT_FAILURE; // Exit if tables can't be created
+    }
     auto user_repo = std::make_shared<UserRepository>(database->get_connection());
     auto barrack_repo = std::make_shared<BarrackRepository>(database->get_connection());
+    auto event_repo = std::make_shared<EventRepository>(database->get_connection());
+
+    auto outbox_relay = std::make_shared<OutboxRelay>(cass_db, event_repo);
+    outbox_relay->start();
 
     auto auth_manager = std::make_shared<AuthManager>(user_repo);
     auto barrack_manager = std::make_shared<BarrackManager>(barrack_repo, cass_db);

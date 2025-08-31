@@ -28,6 +28,10 @@ static constexpr const char* GET_MESSAGES =
         "SELECT barrack_id, message_id, sender_id, content, timestamp "
         "FROM chat_app.messages WHERE barrack_id = ? LIMIT ?";
 
+static constexpr const char* DELETE_BARRACK_MESSAGES =
+        "DELETE FROM chat_app.messages "
+        "WHERE barrack_id = ?";
+
 struct CassandraConnection {
     CassCluster *cluster = nullptr;
     CassSession *session = nullptr;
@@ -50,13 +54,14 @@ class CassandraMessageRepo : public MessageRepository {
         Result<std::monostate> init_database();
         Result<std::monostate> add(const ChatMessage& message) override;
         Result<std::vector<ChatMessage>> get_for_barrack(const std::string& barrack_id, int limit) override;
-
+        Result<std::monostate> delete_barrack_messages(const std::string& barrack_id) override;
     private:
         std::shared_ptr<CassandraConnection> conn_;
         Result<std::monostate> execute_simple_query(const char* query);
         bool prepare_statements();
         const CassPrepared* add_message_prepared_ = nullptr;
         const CassPrepared* get_message_prepared_ = nullptr;
+        const CassPrepared* delete_barrack_messages_prepared_ = nullptr;
 };
 
 #endif
