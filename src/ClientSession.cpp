@@ -67,7 +67,7 @@ void ClientSession::on_run(){
 void ClientSession::on_accept(error_code ec){
     if(ec){
         fail(ec, "accept");
-        close_session();
+        close_session(websocket::close_reason("failure: accept"));
         return;
     }
     set_status(ConnStatus::ACTIVE);
@@ -182,6 +182,10 @@ void ClientSession::do_actual_write(){
                         shared_from_this()
                     )    
                 );
+}
+
+void ClientSession::leave_session(boost::beast::websocket::close_code code, boost::beast::websocket::reason_string str){
+    close_session(websocket::close_reason(code, str));
 }
 
 void ClientSession::close_session(websocket::close_reason reason){

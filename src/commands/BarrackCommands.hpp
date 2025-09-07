@@ -1,8 +1,8 @@
 #ifndef BARRACKCOMMANDS_H
 #define BARRACKCOMMANDS_H
 
-#include "ICommand.hpp"
 #include <json.hpp>
+#include "ICommand.hpp"
 
 class CreateBarrackCommand : public ICommand {
     public:

@@ -113,6 +113,7 @@ add_project_library(app_core
     src/ConnectionManager.cpp
     src/Listener.cpp
     src/MessageDispatcher.cpp
+    src/Room.cpp
     src/commands/AuthCommands.cpp
     src/commands/BarrackCommands.cpp
     src/commands/CommandFactory.cpp

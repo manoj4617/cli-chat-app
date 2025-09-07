@@ -44,6 +44,30 @@ AuthManager::AuthCreds AuthManager::authenticate_user(const std::string& usernam
     }
 }
 
+AuthManager::StatusResult AuthManager::logout(const std::string& user_id){
+    if(user_id.empty()){
+        return Error{ErrorCode::INVALID_DATA, "User ID is empty"};
+    }
+
+    auto username = usernames_.find(user_id);
+    if(username == usernames_.end()){
+        return Error{ErrorCode::MEMBER_NOT_FOUND, "User ID not found"};
+    }
+
+    auto token = tokens_.find(username->second);
+    if(token == tokens_.end()){
+        return Error{ErrorCode::INVALID_TOKEN, "User ID does not have a valid token"};
+    }
+
+    tokens_.erase(token);
+    auto user_account = users_by_name_.find(username->second);
+    if(user_account != users_by_name_.end()){
+        users_by_name_.erase(user_account);
+    }
+
+    return Success{};
+}
+
 AuthManager::AuthCreds AuthManager::create_user(const std::string& username, const std::string& password){
     if(username.empty() || password.empty()){
         return Error{ErrorCode::INVALID_CREDENTIALS, "Invalid Credentials"};

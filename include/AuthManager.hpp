@@ -27,6 +27,7 @@ class AuthManager{
         void invalidate_token(const std::string& token);
 
         AuthResult get_username(const std::string& user_id);
+        StatusResult logout(const std::string& user_id);
         bool user_exists(const std::string& user_id);
 
     private:

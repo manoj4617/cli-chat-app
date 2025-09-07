@@ -120,3 +120,26 @@ void GetUsernameCommand::execute(std::shared_ptr<ClientSession> session, const C
     }
 }
 
+LogoutCommand::LogoutCommand(const nlohmann::json& payload){
+    user_id_ = payload.value("user_id", "");
+}
+
+void LogoutCommand::execute(std::shared_ptr<ClientSession> session, const CommandContext &context){
+    auto result = context.auth_manager->logout(user_id_);
+    if(std::holds_alternative<Error>(result)){
+        nlohmann::json response {
+            {"sequence_id", session->get_next_sequence_id()},
+            {"type", message_type_to_string(MessageType::GET_USER_NAME)},
+            {"message" , std::get<Error>(result).message}
+        };
+        session->send_message(response.dump());
+    } else{
+        nlohmann::json response {
+            {"sequence_id", session->get_next_sequence_id()},
+            {"type", message_type_to_string(MessageType::GET_USER_NAME)},
+            {"message" , "Logged out successfully!!"}
+        };
+        session->send_message(response.dump());
+        session->leave_session(boost::beast::websocket::close_code::normal, std::string("Logging out").c_str());
+    }
+}

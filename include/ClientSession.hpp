@@ -52,7 +52,7 @@ class ClientSession : public std::enable_shared_from_this<ClientSession> {
         void do_read();
         void on_read(error_code, std::size_t);
         void on_write(error_code, std::size_t);
-
+        void leave_session(boost::beast::websocket::close_code code, boost::beast::websocket::reason_string str);
         /* getters */
         SessionID get_id() const { return session_id_;}
         std::string get_client_ip_addr() const { return client_ip_; }

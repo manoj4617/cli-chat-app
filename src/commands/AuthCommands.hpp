@@ -31,4 +31,12 @@ class GetUsernameCommand : public ICommand {
         std::string user_id_;
 };
 
+class LogoutCommand : public ICommand {
+    public:
+        explicit LogoutCommand(const nlohmann::json& payload);
+        void execute(std::shared_ptr<ClientSession> session, const CommandContext& context) override;
+    private:
+        std::string user_id_;
+};
+
 #endif

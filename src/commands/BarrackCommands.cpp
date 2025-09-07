@@ -1,6 +1,9 @@
 #include "BarrackCommands.hpp"
 #include "Messages.hpp"
 #include "ClientSession.hpp"
+#include "Room.hpp"
+
+std::unordered_map<std::string, std::shared_ptr<Room>> g_Members;
 
 CreateBarrackCommand::CreateBarrackCommand(const nlohmann::json& payload){
     barrack_name_ = payload.value("barrack_name", "");
@@ -47,6 +50,10 @@ void CreateBarrackCommand::execute(std::shared_ptr<ClientSession> session , cons
                 {"owner_id", owner_uid_}
             }}
         };
+        
+        if(g_Members.find(barrack_success.barrack_id) == g_Members.end()){
+            g_Members[barrack_success.barrack_id] = std::make_shared<Room>(barrack_success.barrack_id);
+        }
         session->send_message(response.dump());
     }
 }
@@ -79,6 +86,13 @@ void DestroyBarrackCommand::execute(std::shared_ptr<ClientSession> session, cons
             }}
         };
         session->send_message(response.dump());
+        auto room_itr = g_Members.find(barrack_id_);
+        if(room_itr != g_Members.end()){
+            g_Members.erase(room_itr);
+        }
+        else{
+            std::cout << "Room not found" << std::endl;
+        }
     }
 }
 
@@ -110,6 +124,16 @@ void JoinBarrackCommand::execute(std::shared_ptr<ClientSession> session, const C
                 {"message", "Barrack joined successfully"},
             }}
         };
+
+        auto join_itr = g_Members.find(barrack_id_);
+        if(join_itr != g_Members.end()){
+            auto room = join_itr->second;
+            room->join(session);
+        }
+        else{
+            g_Members[barrack_id_] = std::make_shared<Room>(barrack_id_);
+            g_Members[barrack_id_]->join(session);
+        }
         session->send_message(response.dump());
     }
 }
@@ -141,6 +165,14 @@ void LeaveBarrackCommand::execute(std::shared_ptr<ClientSession> session, const 
                 {"message", "Barrack left successfully"},
             }}
         };
+        auto leave_itr = g_Members.find(barrack_id_);
+        if(leave_itr != g_Members.end()){
+            auto room = leave_itr->second;
+            room->leave(session);
+        }
+        else{
+            std::cout << "Session ID: " << session->get_id() << " Not a member of: " << barrack_id_;
+        }
         session->send_message(response.dump());
     }
 }
@@ -166,6 +198,14 @@ void MessageBarrackCommand::execute(std::shared_ptr<ClientSession> session, cons
         session->send_message(response.dump());
     }
     else {
+        auto message_itr = g_Members.find(barrack_id_);
+        if(message_itr != g_Members.end()){
+            auto room = message_itr->second;
+            room->broadcast(message_);
+        }
+        else{
+            std::cout << "Session ID: " << session->get_id() << " Not a member of: " << barrack_id_;
+        }
         nlohmann::json response = {
             {"type", message_type_to_string(MessageType::MESSAGE_BARRACK_SUCCESS)},
             {"sequence_id", session->get_next_sequence_id()},
