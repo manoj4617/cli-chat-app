@@ -33,6 +33,7 @@ class BarrackManager{
         StatusResult message_barrack(const std::string& barrack_id, const std::string& user_id, const std::string& message);
 
         std::optional<Barrack> get_barrack(const std::string& barrack_id);
+        std::optional<std::vector<Barrack>> get_all_barracks();
         std::optional<BarrackMember> get_barrack_member(const std::string& barrack_id, const std::string& user_id);
         std::optional<std::vector<BarrackMember>> get_barrack_members(const std::string& barrack_id);
         std::optional<std::vector<ChatMessage>> get_barrack_messages(const std::string& barrack_id);

@@ -18,6 +18,7 @@ CommandFactory::CommandFactory(){
     register_command("GETBARRACKMEMBERS", [](const nlohmann::json& p){ return std::make_unique<GetBarrackMembersCommand>(p); });
     register_command("GETBARRACKMESSAGES", [](const nlohmann::json& p){ return std::make_unique<GetBarrackMessagesCommand>(p); });
     register_command("GETBARRACK", [](const nlohmann::json& p){ return std::make_unique<GetBarrackCommand>(p); });
+    register_command("GETBARRACKS", [](const nlohmann::json& p){ return std::make_unique<GetBarracks>(p); });
 }
 std::unique_ptr<ICommand> CommandFactory::create_command(const std::string& type, const nlohmann::json& payload){
     auto it = command_map.find(type);

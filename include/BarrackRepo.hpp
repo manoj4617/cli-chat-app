@@ -21,6 +21,7 @@ public:
     Result<std::monostate> add_member(const std::string& barrack_id, const std::string& user_id);
     Result<std::monostate> remove_member(const std::string& barrack_id, const std::string& user_id);
     Result<std::vector<BarrackMember>> get_members(const std::string& barrack_id);
+    Result<std::vector<Barrack>> get_all_barracks();
 
 private:
     std::shared_ptr<SQLite::Database> db_;

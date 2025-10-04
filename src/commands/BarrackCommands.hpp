@@ -96,4 +96,9 @@ class GetBarrackCommand : public ICommand {
         std::string barrack_id_;
 };
 
+class GetBarracks : public ICommand {
+    public:
+        explicit GetBarracks(const nlohmann::json& payload);
+        void execute(std::shared_ptr<ClientSession> session, const CommandContext& context) override;
+};
 #endif

@@ -211,3 +211,27 @@ Result<std::vector<BarrackMember>> BarrackRepository::get_members(const std::str
         return Error{ErrorCode::DATABASE_ERROR, "Database query failed for get_members: " + std::string(ex.what())};
     }
 }
+
+Result<std::vector<Barrack>> BarrackRepository::get_all_barracks(){
+    const char* query =
+    "SELECT barrack_id, name, admin_id, is_private, created_at"
+    "FROM barracks";
+
+    try{
+        std::vector<Barrack> barracks;
+        SQLite::Statement statement(*db_, query);
+
+        while(statement.executeStep()){
+            Barrack barrack;
+            barrack.barrack_id = statement.getColumn("barrack_id").getString();
+            barrack.barrack_name = statement.getColumn("name").getString();
+            barrack.admin_id = statement.getColumn("admin_id").getString();
+            barrack.is_private = statement.getColumn("is_private").getInt();
+            barrack.created_at = parse_timestamp_iso8601(statement.getColumn("create_at").getString());
+            barracks.emplace_back(barrack);
+        }
+        return barracks;
+    } catch(const SQLite::Exception& ex){
+        return Error{ErrorCode::DATABASE_ERROR, "Database query failed for get_barracks: " + std::string(ex.what())};
+    }
+}

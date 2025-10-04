@@ -56,6 +56,8 @@ BarrackManager::BarrackResult BarrackManager::create_barrack(const std::string& 
     std::lock_guard<std::mutex> lock(mtx_);
     barracks_[b_id] = new_barrack;
     auto result = barrack_repo_->create(new_barrack);
+    barracks_[b_id].hashed_password = "";
+    barracks_[b_id].salt = "";
     if(std::holds_alternative<Error>(result)){
         barracks_.erase(b_id);
         return std::get<Error>(result);
@@ -259,6 +261,35 @@ std::optional<std::vector<BarrackMember>> BarrackManager::get_barrack_members(co
         return std::nullopt;
     }
     return std::get<std::vector<BarrackMember>>(result);
+}
+
+std::optional<std::vector<Barrack>> BarrackManager::get_all_barracks(){
+    std::unique_lock<std::mutex> lock(mtx_);
+    std::vector<Barrack> barracks;
+    auto result = barrack_repo_->get_all_barracks();
+    if(std::holds_alternative<Error>(result)){
+        return std::nullopt;
+    }
+    auto db_barracks = std::get<std::vector<Barrack>>(result);
+    if(barracks_.size() > 0 && db_barracks.size() > 0){
+        for(auto itr = db_barracks.begin(); itr != db_barracks.end() ; ++itr){
+            auto b_itr = barracks_.find(itr->barrack_id);
+            if(b_itr == barracks_.end()){
+                barracks_[itr->barrack_id] = Barrack(
+                    itr->barrack_id,
+                    itr->barrack_name,
+                    itr->admin_id,
+                    itr->is_private,
+                    "",
+                    "",
+                    itr->created_at
+                );
+            }
+            barracks.emplace_back(barracks_[itr->barrack_id]);
+        }
+    }
+    lock.unlock();
+    return barracks;
 }
 
 std::string BarrackManager::hash_password(const std::string& password, const std::string& salt){
