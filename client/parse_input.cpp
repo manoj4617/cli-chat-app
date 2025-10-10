@@ -71,14 +71,18 @@ ClientCommand parse_input(const std::string& input){
         }
         bool is_private = (input_fields.size() == 4) ? std::atoi(input_fields[2].c_str()) : 0;
         std::string password = (input_fields.size() == 4) ? input_fields[3] : "";
+        if(is_private && password.empty()){
+            return InvalidCommand{"/create", "Please provide barrack password."};
+        }
         return CreateBarrackCommand{barrack_name, is_private, password};
     }
 
     if(command_name == "/destroy"){
-        if(!check_arg_count(input_fields, 0)){
-            return InvalidCommand{"/destory", "Usage: /destroy"};
+        if(!check_arg_count(input_fields, 1)){
+            return InvalidCommand{"/destory", "Usage: /destroy <barrack_name>"};
         }
-        return DestroyBarrackCommand{};    
+        std::string barrack_name = input_fields[1];
+        return DestroyBarrackCommand{barrack_name};    
     }
 
     if(command_name == "/barracks"){

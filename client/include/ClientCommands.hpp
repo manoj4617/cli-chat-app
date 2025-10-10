@@ -34,7 +34,8 @@ struct CreateBarrackCommand  {                   // /create barrack_name is_priv
     std::optional<std::string> password;
 };
 
-struct DestroyBarrackCommand  {                  // /destroy barrack_name
+struct DestroyBarrackCommand  {                 // /destroy barrack_name         
+    std::string barrack_name;
 };                  
 struct GetBarrackCommand  {};                    // /barracks
 struct InvalidCommand  {
