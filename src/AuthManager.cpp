@@ -141,7 +141,6 @@ std::string AuthManager::generate_auth_token(const std::string& user_id){
     std::string token_hex = Crypto::generate_auth_token(AUTH_TOKEN_BYTES);
     
     std::lock_guard<std::mutex> lock(mtx_);
-    tokens_[user_id] = token_hex; 
     return token_hex;
 }
 
