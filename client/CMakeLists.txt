@@ -47,7 +47,7 @@ FetchContent_MakeAvailable(ftxui)
 add_executable(client
   main.cpp
   NetworkManager.cpp
-  CommandValidator.cpp
+  CommandOperation.cpp
   parse_input.cpp
 )
 target_include_directories(client

@@ -237,11 +237,15 @@ void GetBarrackMemberCommand::execute(std::shared_ptr<ClientSession> session, co
         session->send_message(response.dump());
     }
     else {
+        BarrackMember member = result.value();
         nlohmann::json response = {
             {"type", message_type_to_string(MessageType::GET_BARRACK_MEMBER_SUCCESS)},
             {"sequence_id", session->get_next_sequence_id()},
             {"payload", {
-                {"message", "Barrack member fetched successfully"},
+                {"barrack_id", member.barrack_id},
+                {"user_id", member.user_id},
+                {"joined_at", std::chrono::system_clock::to_time_t(member.joined_at)},
+                {"message", "Barrack member fetched successfully"}
             }}
         };
         session->send_message(response.dump());

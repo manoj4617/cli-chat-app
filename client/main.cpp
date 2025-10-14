@@ -19,13 +19,9 @@ int main() {
   std::thread network_thread([&ioc]{ioc.run();});
 
   while(true){
-    std::string login_json = R"({"type":"LOGIN", "payload":{"username":"user", "password":"pass"}})";
-    net_manager->send(login_json);
-    if(auto msg = inbound_queue.try_pop()){
-      if(msg.has_value()){
-        std::cout << msg.value();
-      }
-    }
+
+    
+
   }
   return 0;
 }

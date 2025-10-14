@@ -1,5 +1,4 @@
 #include "ClientCommands.hpp"
-#include "AppState.hpp"
 
 bool check_arg_count(const std::vector<std::string>& args, size_t expected_count) {
     // Command itself is args[0], so we check for expected_count + 1

@@ -6,6 +6,8 @@
 #include <deque>
 #include <chrono>
 #include <unordered_map>
+#include <mutex>
+
 #include "types.hpp"
 
 struct Users{
@@ -47,6 +49,7 @@ struct AppState{
 
     ConnectionStatus conn_status_ = ConnectionStatus::DISCONNECTED;
 
+    std::mutex app_state_mutex_;
     c_time::time_point last_activity_ = c_time::now();
     bool is_logged_in_ = false;
     std::string user_id_;
@@ -90,7 +93,7 @@ struct AppState{
     bool barrack_exists(const std::string& barrack_name) const{
         return total_barracks_.find(barrack_name) != total_barracks_.end();
     }
-    bool get_barrack_id(std::string& barrack_name, std::string& barrack_id){
+    bool get_barrack_id(const std::string& barrack_name, std::string& barrack_id) const {
         auto barrack_itr = total_barracks_.find(barrack_name);
         if(barrack_itr != total_barracks_.end()){
             barrack_id.assign(barrack_itr->second.barrack_id);

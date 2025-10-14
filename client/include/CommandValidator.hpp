@@ -29,4 +29,6 @@ class CommandValidator {
 
 };
 
+std::optional<std::string> command_serializer(const ClientCommand&, AppState&);
+
 #endif

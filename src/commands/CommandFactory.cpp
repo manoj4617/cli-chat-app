@@ -7,6 +7,7 @@
 
 CommandFactory::CommandFactory(){
     register_command("LOGIN", [](const nlohmann::json& p) { return std::make_unique<LoginCommand>(p); });
+    register_command("LOGOUT", [](const nlohmann::json& p){ return make_unique<LogoutCommand>(p); });
     register_command("CREATEUSER", [](const nlohmann::json& p) { return std::make_unique<CreateUserCommand>(p); });
     register_command("GETUSER", [](const nlohmann::json& p){ return std::make_unique<GetUsernameCommand>(p); });
     register_command("JOINBARRACK", [](const nlohmann::json& p){ return std::make_unique<JoinBarrackCommand>(p); });
