@@ -16,12 +16,12 @@ class ClientController {
 
     public:
         ClientController(std::shared_ptr<AppState> state,
-                        ConcurrentQueue<ClientCommand>& outbound_commands,
+                        ConcurrentQueue<std::string>& outbound_commands,
                         ConcurrentQueue<std::string>& inbound_messages);
-        void on_user_input();
+        void on_user_input(const std::string&);
         void process_network_messages();
     private:
-        void process_inbound_message(const std::string);
+        void process_inbound_message(const std::string&);
 
         using MessageHandler = std::function<void(const json&)>;
         std::unordered_map<std::string, MessageHandler> message_handlers_;
@@ -39,6 +39,7 @@ class ClientController {
 
         void handle_get_barrack_members_response(const json& payload);
         void handle_get_barrack_member_response(const json& payload);
+        std::mutex app_state_mutex_;
 
         std::shared_ptr<AppState> app_state_;
         ConcurrentQueue<std::string>& outbound_queue_;

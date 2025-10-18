@@ -33,7 +33,9 @@ struct ClientChatMessage {
                 std::chrono::system_clock::time_point sent)
         :barrack_id(std::move(bid)),
           sender_user_id(std::move(sid)), content(std::move(msg_content)), sent_at(sent) {}
-
+    static ClientChatMessage make_notification(const std::string& message){
+        return ClientChatMessage("", "", message, std::chrono::system_clock::now());
+    }
     ClientChatMessage() = default;
     virtual ~ClientChatMessage() = default;
 };
@@ -49,7 +51,6 @@ struct AppState{
 
     ConnectionStatus conn_status_ = ConnectionStatus::DISCONNECTED;
 
-    std::mutex app_state_mutex_;
     c_time::time_point last_activity_ = c_time::now();
     bool is_logged_in_ = false;
     std::string user_id_;
@@ -79,7 +80,7 @@ struct AppState{
         barrack_members_.clear();
         clear_history();
     }
-    void add_chat_message(ClientChatMessage& message){
+    void add_chat_message(ClientChatMessage message){
         if(chat_history_.size() >= MAX_HISTORY){
             chat_history_.pop_front();
         }
