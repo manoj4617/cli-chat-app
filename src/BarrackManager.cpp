@@ -1,12 +1,10 @@
 #include <atomic>
 #include <chrono>
+#include <iterator>
 #include <mutex>
 #include <optional>
 #include <string>
 
-#include <boost/uuid/uuid.hpp>            // uuid class
-#include <boost/uuid/uuid_generators.hpp> // generators (random, name-based, etc.)
-#include <boost/uuid/uuid_io.hpp>
 #include <variant>
 
 #include "BarrackManager.hpp"
@@ -158,7 +156,8 @@ BarrackManager::StatusResult BarrackManager::leave_barrack(const std::string &ba
     return Error{ErrorCode::MEMBER_NOT_FOUND, "User is not member of this barrack"};
 }
 
-BarrackManager::StatusResult BarrackManager::message_barrack(const std::string &barrack_id, const std::string &user_id, const std::string &message){
+BarrackManager::StatusResult BarrackManager::message_barrack(const std::string &barrack_id, const std::string &user_id, 
+                                                                const std::string &message){
     if(barrack_id.empty() || user_id.empty() || message.empty()){
         return Error{ErrorCode::INVALID_DATA, "Invalid data"};
     }
@@ -178,6 +177,7 @@ BarrackManager::StatusResult BarrackManager::message_barrack(const std::string &
                     barrack_id,
                     user_id,
                     message,
+                    id_generator_->nextid(),
                     Clock::now());
                
     barracks_messages_[barrack_id].push_back(msg);
@@ -238,6 +238,38 @@ std::optional<std::vector<ChatMessage>> BarrackManager::get_barrack_messages(con
     }
     lock.unlock();
     auto result = msg_repo_->get_for_barrack(barrack_id);
+    if(std::holds_alternative<Error>(result)){
+        return std::nullopt;
+    }
+    return std::get<std::vector<ChatMessage>>(result);
+}
+
+std::optional<std::vector<ChatMessage>> BarrackManager::sync_get_barrack_messages(const std::string& barrack_id, uint64_t sequqnce_id){
+    if(barrack_id.empty()){
+        return std::nullopt;
+    }
+
+    std::unique_lock<std::mutex> lock(mtx_);
+    
+    auto it = barracks_messages_.find(barrack_id);
+
+    if(it != barracks_messages_.end()){
+        std::vector<ChatMessage> unsynced;
+
+        std::copy_if(it->second.begin(), it->second.end(),
+                    std::back_inserter(unsynced),
+                    [&sequqnce_id](const ChatMessage& msg){
+                        return msg.sequence_id > sequqnce_id;
+                    });
+
+        if(!unsynced.empty()){
+            lock.unlock();
+            return unsynced;
+        }
+    }
+    lock.unlock();
+
+    auto result = msg_repo_->sync_get_barrack_messages(barrack_id, sequqnce_id);
     if(std::holds_alternative<Error>(result)){
         return std::nullopt;
     }
@@ -313,11 +345,7 @@ std::string BarrackManager::generate_barrack_id(){
     return ss.str();
 }
 
-std::string BarrackManager::generate_message_id(){
-    boost::uuids::random_generator generator;
-    boost::uuids::uuid uuid = generator();
-
-    std::stringstream ss;
-    ss << "msg_" << uuid;
-    return ss.str();
+boost::uuids::uuid BarrackManager::generate_message_id(){
+    static boost::uuids::time_generator_v1 s_time_based_uuid_generator;
+    return s_time_based_uuid_generator();
 }

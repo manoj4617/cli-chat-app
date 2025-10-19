@@ -321,6 +321,7 @@ void GetBarrackMessagesCommand::execute(std::shared_ptr<ClientSession> session, 
                 {"barrack_id", message.barrack_id},
                 {"user_id", message.sender_user_id},
                 {"message", message.content},
+                {"sequence_id", message.sequence_id},
                 {"created_at", std::chrono::system_clock::to_time_t(message.sent_at)} 
               }  
             );
@@ -403,6 +404,49 @@ void GetBarracks::execute(std::shared_ptr<ClientSession> session, const CommandC
             {"payload", {
                 {"message", "Barracks fetched successfully"},
                 {"messages", barracks}
+            }}
+        };
+        session->send_message(response.dump());
+    }
+}
+
+SyncMessageRequest::SyncMessageRequest(const nlohmann::json& payload){
+    barrack_id_ = payload.value("barrack_id", "");
+    sequence_id_ = payload.value("since_sequence_id", 0);
+}
+
+void SyncMessageRequest::execute(std::shared_ptr<ClientSession> session, const CommandContext &context){
+    auto result = context.barrack_manager->sync_get_barrack_messages(barrack_id_, sequence_id_);
+
+    if(result == std::nullopt){
+        nlohmann::json response = {
+            {"type", message_type_to_string(MessageType::GET_BARRACK_MESSAGES_FAILURE)},
+            {"sequence_id", session->get_next_sequence_id()},
+            {"payload", {
+                {"error_code", message_type_to_string(MessageType::GET_BARRACK_MESSAGES_FAILURE)},
+                {"message", "Messages not found"}
+            }}
+        };
+        session->send_message(response.dump());
+    } else {
+        std::vector<nlohmann::json> messages_json;
+        for(const auto& message : *result){
+            messages_json.push_back(
+              {
+                {"barrack_id", message.barrack_id},
+                {"user_id", message.sender_user_id},
+                {"message", message.content},
+                {"sequence_id", message.sequence_id},
+                {"created_at", std::chrono::system_clock::to_time_t(message.sent_at)} 
+              }  
+            );
+        }
+        nlohmann::json response = {
+            {"type", message_type_to_string(MessageType::GET_BARRACK_MESSAGES_SUCCESS)},
+            {"sequence_id", session->get_next_sequence_id()},
+            {"payload", {
+                {"message", "Barrack messages fetched successfully"},
+                {"messages", messages_json}
             }}
         };
         session->send_message(response.dump());

@@ -98,7 +98,18 @@ class GetBarrackCommand : public ICommand {
 
 class GetBarracks : public ICommand {
     public:
-        explicit GetBarracks(const nlohmann::json& payload);
+        explicit GetBarracks() = default;
         void execute(std::shared_ptr<ClientSession> session, const CommandContext& context) override;
 };
+
+class SyncMessageRequest : public ICommand {
+    public:
+        explicit SyncMessageRequest(const nlohmann::json& payload);
+        void execute(std::shared_ptr<ClientSession> session, const CommandContext& context) override;
+    
+    private:
+        std::string barrack_id_;
+        uint64_t sequence_id_;
+};
+
 #endif

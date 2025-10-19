@@ -1,6 +1,7 @@
 #ifndef BARRACK_MANAGER_H
 #define BARRACK_MANAGER_H
 
+#include <cstdint>
 #include <thread>
 #include <vector>
 #include <unordered_map>
@@ -13,6 +14,7 @@
 #include "BarrackRepo.hpp"
 #include "MessageRepo.hpp"
 #include "types.hpp"
+#include "SnowFlakeGenerator.hpp"
 
 class BarrackManager{
     public:
@@ -30,18 +32,18 @@ class BarrackManager{
 
         StatusResult join_barrack(const std::string& barrack_id, const std::string& user_id, std::optional<std::string> password);
         StatusResult leave_barrack(const std::string& barrack_id, const std::string& user_id);
-        StatusResult message_barrack(const std::string& barrack_id, const std::string& user_id, const std::string& message);
+        StatusResult message_barrack(const std::string& barrack_id, const std::string& user_id,const std::string& message);
 
         std::optional<Barrack> get_barrack(const std::string& barrack_id);
         std::optional<std::vector<Barrack>> get_all_barracks();
         std::optional<BarrackMember> get_barrack_member(const std::string& barrack_id, const std::string& user_id);
         std::optional<std::vector<BarrackMember>> get_barrack_members(const std::string& barrack_id);
         std::optional<std::vector<ChatMessage>> get_barrack_messages(const std::string& barrack_id);
-
+        std::optional<std::vector<ChatMessage>> sync_get_barrack_messages(const std::string& barrack_id, uint64_t sequqnce_id);
     private:
         
         std::string generate_barrack_id();
-        std::string generate_message_id();
+        boost::uuids::uuid generate_message_id();
         std::string hash_password(const std::string& passowrd, const std::string& salt);
         bool verify_password(const std::string& hashed_password, const std::string& stored_hash);
         std::string generate_salt();
@@ -51,6 +53,9 @@ class BarrackManager{
         void dispatch_cass_message();
             
         ConcurrentQueue<ChatMessage> message_queue_;
+
+        using snowflake_t = snowflake<1534832906275L, std::mutex>;
+        std::unique_ptr<snowflake_t> id_generator_;
         std::mutex mtx_;
         std::thread message_dispatcher_;
         std::shared_ptr<BarrackRepository> barrack_repo_;

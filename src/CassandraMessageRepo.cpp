@@ -1,6 +1,11 @@
 #include "Error.hpp"
+#include "boost/uuid/uuid_io.hpp"
+#include "boost/uuid/string_generator.hpp"
 #include "types.hpp"
 #include <CassandraMessageRepo.hpp>
+#include <cassandra.h>
+#include <cstdint>
+#include <sys/types.h>
 
 // These will automatically call the correct `_free` function when they go out of scope.
 using CassStatementPtr = std::unique_ptr<CassStatement, decltype(&cass_statement_free)>;
@@ -11,6 +16,7 @@ using CassResultPtr    = std::unique_ptr<const CassResult, decltype(&cass_result
 CassandraMessageRepo::CassandraMessageRepo(std::shared_ptr<CassandraConnection> cass_conn){
     conn_ = cass_conn;
     const char* hosts = "127.0.0.1";
+    cass_log_set_level(CASS_LOG_INFO);
     CassError ec = cass_cluster_set_contact_points(conn_->cluster, hosts);
     if(ec != CASS_OK){
         std::cerr << "[ERROR] Failed to set contact points: "
@@ -33,6 +39,7 @@ CassandraMessageRepo::CassandraMessageRepo(std::shared_ptr<CassandraConnection> 
 CassandraMessageRepo::~CassandraMessageRepo() {
     if (add_message_prepared_) cass_prepared_free(add_message_prepared_);
     if (get_message_prepared_) cass_prepared_free(get_message_prepared_);
+    if (sync_get_barrack_message_) cass_prepared_free(sync_get_barrack_message_);
 }
 
 Result<std::monostate> CassandraMessageRepo::init_database(){
@@ -67,21 +74,45 @@ bool CassandraMessageRepo::prepare_statements(){
     CassFuturePtr add_msg_future(cass_session_prepare(conn_->session, ADD_MESSAGE_TO_DATABASE), cass_future_free);
     CassFuturePtr get_message_future(cass_session_prepare(conn_->session, GET_MESSAGES), cass_future_free);
     CassFuturePtr delete_messages(cass_session_prepare(conn_->session, DELETE_BARRACK_MESSAGES), cass_future_free);
+    CassFuturePtr sync_get_barrack_message(cass_session_prepare(conn_->session, GET_MESSAGES_AFTER_SEQUENCE_ID), cass_future_free);
 
-    CassError rc_1 = cass_future_error_code(add_msg_future.get());
-    CassError rc_2 = cass_future_error_code(get_message_future.get());
-    CassError rc_3 = cass_future_error_code(delete_messages.get());
-    if(rc_1 != CASS_OK || rc_2 != CASS_OK || rc_3 != CASS_OK){
-        std::cerr << "[ERROR] Prepared statments creation failed: "
-                  << cass_error_desc(rc_1) << std::endl ;
+    CassError ec = cass_future_error_code(add_msg_future.get());
+    if(ec != CASS_OK){
+        std::cerr << "[ERROR] Prepared add_msg_future statments creation failed: "
+                  << cass_error_desc(ec) << std::endl ;
+        return false;
+    }
+    ec = cass_future_error_code(get_message_future.get());
+    if(ec != CASS_OK){
+        std::cerr << "[ERROR] Prepared get_message_future statments creation failed: "
+                  << cass_error_desc(ec) << std::endl ;
+        return false;
+    }
+    ec = cass_future_error_code(delete_messages.get());
+    if(ec != CASS_OK){
+        std::cerr << "[ERROR] Prepared delete_messages statments creation failed: "
+                  << cass_error_desc(ec) << std::endl ;
+        return false;
+    }
+    ec = cass_future_error_code(sync_get_barrack_message.get());
+    if(ec != CASS_OK){
+        std::cerr << "[ERROR] Prepared sync_get_barrack_message statments creation failed: "
+                  << cass_error_desc(ec) << std::endl ;
         return false;
     }
 
     add_message_prepared_ = cass_future_get_prepared(add_msg_future.get());
     get_message_prepared_ = cass_future_get_prepared(get_message_future.get());
     delete_barrack_messages_prepared_ = cass_future_get_prepared(delete_messages.get());
-
+    sync_get_barrack_message_ = cass_future_get_prepared(sync_get_barrack_message.get()); 
     return true;
+}
+
+static CassUuid to_cass_uuid(const boost::uuids::uuid& uuid){
+    CassUuid cassuid;
+    std::string uuid_str = boost::uuids::to_string(uuid);
+    cass_uuid_from_string(uuid_str.c_str(), &cassuid);
+    return cassuid;
 }
 
 Result<std::monostate> CassandraMessageRepo::add(const ChatMessage &message) {
@@ -94,9 +125,12 @@ Result<std::monostate> CassandraMessageRepo::add(const ChatMessage &message) {
     if(cass_statement_bind_string(statement.get(), 0, message.barrack_id.c_str())){
         return Error{ErrorCode::DATABASE_ERROR, "Failed to bind barrack_id."};
     }
-    if(cass_statement_bind_string(statement.get(), 1, message.message_id.c_str())){
+
+    CassUuid cass_uuid = to_cass_uuid(message.message_id);
+    if(cass_statement_bind_uuid(statement.get(), 1, cass_uuid)){
         return Error{ErrorCode::DATABASE_ERROR, "Failed to bind message_id."};
     }
+
     if(cass_statement_bind_string(statement.get(), 2, message.sender_user_id.c_str())){
         return Error{ErrorCode::DATABASE_ERROR, "Failed to bind sender_id."};
     }
@@ -104,6 +138,10 @@ Result<std::monostate> CassandraMessageRepo::add(const ChatMessage &message) {
         return Error{ErrorCode::DATABASE_ERROR, "Failed to bind content."};
     }
     
+    if(cass_statement_bind_double(statement.get(), 4, message.sequence_id)){
+        return Error{ErrorCode::DATABASE_ERROR, "Failed to bind sequence_id."};
+    }
+
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(message.sent_at.time_since_epoch()).count();
     if(cass_statement_bind_int64(statement.get(), 4, ms)){
         return Error{ErrorCode::DATABASE_ERROR, "Failed to bind sent_at."};
@@ -160,14 +198,18 @@ Result<std::vector<ChatMessage>> CassandraMessageRepo::get_for_barrack(const std
             return Error{ErrorCode::DATABASE_ERROR, "Failed to get barrack_id from row."};
         }
         msg.barrack_id.assign(str_val, str_len);
-
         CassUuid uuid;
         if(cass_value_get_uuid(cass_row_get_column_by_name(row, "message_id"), &uuid)){
             return Error{ErrorCode::DATABASE_ERROR, "Failed to get message_id from row."};
         }
         char uuid_str[CASS_UUID_STRING_LENGTH];
         cass_uuid_string(uuid, uuid_str);
-        msg.message_id = uuid_str;
+        try {
+            boost::uuids::string_generator gen;
+            msg.message_id = gen(std::string(uuid_str));
+        } catch (...) {
+            return Error{ErrorCode::DATABASE_ERROR, "Failed to parse message_id UUID string."};
+        }
 
         if(cass_value_get_string(cass_row_get_column_by_name(row, "sender_id"), &str_val, &str_len)){
             return Error{ErrorCode::DATABASE_ERROR, "Failed to get sender_id from row."};
@@ -178,6 +220,87 @@ Result<std::vector<ChatMessage>> CassandraMessageRepo::get_for_barrack(const std
             return Error{ErrorCode::DATABASE_ERROR, "Failed to get content from row."};
         }
         msg.content.assign(str_val, str_len);
+
+        cass_int64_t sequence_id;
+        if(cass_value_get_int64(cass_row_get_column_by_name(row, "sequence_id"), &sequence_id)){
+            return Error{ErrorCode::DATABASE_ERROR, "Failed to get sequence_id from row."};
+        }
+        msg.sequence_id = sequence_id;
+        
+        cass_int64_t timestamp_ms;
+        if(cass_value_get_int64(cass_row_get_column_by_name(row, "timestamp"), &timestamp_ms)){
+            return Error{ErrorCode::DATABASE_ERROR, "Failed to get timestamp from row."};
+        }
+        msg.sent_at = std::chrono::system_clock::time_point(std::chrono::milliseconds(timestamp_ms));
+        
+        messages.push_back(std::move(msg));
+    }
+
+    return messages;
+}
+
+Result<std::vector<ChatMessage>> CassandraMessageRepo::sync_get_barrack_messages(const std::string& barrack_id, uint64_t sequence_id){
+    if(!sync_get_barrack_message_){
+        return Error{ErrorCode::DATABASE_ERROR, "Get messages statement is not prepared."};
+    }
+
+    CassStatementPtr statement(cass_prepared_bind(sync_get_barrack_message_), cass_statement_free);
+
+    if(cass_statement_bind_string(statement.get(), 0, barrack_id.c_str())){
+        return Error{ErrorCode::DATABASE_ERROR, "Failed to bind barrack_id."};
+    }
+    if(cass_statement_bind_int64(statement.get(), 1, sequence_id)){
+        return Error{ErrorCode::DATABASE_ERROR, "Failed to bind sequence_id."};
+    }
+
+    CassFuturePtr future(cass_session_execute(conn_->session, statement.get()), cass_future_free);
+    cass_future_wait(future.get()); // wait for results
+
+    if(cass_future_error_code(future.get()) != CASS_OK){
+        const char* msg; size_t len;
+        cass_future_error_message(future.get(), &msg, &len);
+        return Error{ErrorCode::DATABASE_ERROR, "Failed to execute sync_get_barrack_messages query: " + std::string(msg, len)};
+    }
+
+    CassResultPtr result(cass_future_get_result(future.get()), cass_result_free);
+    CassIteratorPtr iterator(cass_iterator_from_result(result.get()), cass_iterator_free);
+
+    std::vector<ChatMessage> messages;
+    messages.reserve(cass_result_row_count(result.get()));
+
+    while(cass_iterator_next(iterator.get())){
+        const CassRow* row = cass_iterator_get_row(iterator.get());
+        ChatMessage msg;
+        const char* str_val;
+        size_t str_len;
+        CassUuid uuid;
+        if(cass_value_get_uuid(cass_row_get_column_by_name(row, "message_id"), &uuid)){
+            return Error{ErrorCode::DATABASE_ERROR, "Failed to get message_id from row."};
+        }
+        char uuid_str[CASS_UUID_STRING_LENGTH];
+        cass_uuid_string(uuid, uuid_str);
+        try {
+            boost::uuids::string_generator gen;
+            msg.message_id = gen(std::string(uuid_str));
+        } catch (...) {
+            return Error{ErrorCode::DATABASE_ERROR, "Failed to parse message_id UUID string."};
+        }
+
+        if(cass_value_get_string(cass_row_get_column_by_name(row, "sender_id"), &str_val, &str_len)){
+            return Error{ErrorCode::DATABASE_ERROR, "Failed to get sender_id from row."};
+        }
+        msg.sender_user_id.assign(str_val, str_len);
+
+        if(cass_value_get_string(cass_row_get_column_by_name(row, "content"), &str_val, &str_len)){
+            return Error{ErrorCode::DATABASE_ERROR, "Failed to get content from row."};
+        }
+        msg.content.assign(str_val, str_len);
+
+        cass_int64_t sequence_id;
+        if(cass_value_get_int64(cass_row_get_column_by_name(row, "sequence_id"), &sequence_id)){
+            return Error{ErrorCode::DATABASE_ERROR, "Failed to get sequence_id from row."};
+        }
+        msg.sequence_id = sequence_id;
 
         cass_int64_t timestamp_ms;
         if(cass_value_get_int64(cass_row_get_column_by_name(row, "timestamp"), &timestamp_ms)){

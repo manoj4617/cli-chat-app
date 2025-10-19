@@ -103,7 +103,7 @@ target_link_libraries(auth_manager PRIVATE data_layer crypto_utils)
 add_project_library(barrack_manager
     src/BarrackManager.cpp
 )
-target_link_libraries(barrack_manager PRIVATE data_layer crypto_utils)
+target_link_libraries(barrack_manager PRIVATE data_layer crypto_utils atomic)
 
 # --- Core Application & Networking Logic ---
 

@@ -20,6 +20,7 @@ struct Barracks{
     std::string owner_id;
     std::string barrack_name;
     bool is_private;
+    uint64_t sequqnce_id;
     std::chrono::steady_clock::time_point created_on;
 };
 

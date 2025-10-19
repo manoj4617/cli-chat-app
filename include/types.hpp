@@ -5,6 +5,10 @@
 #include <chrono>
 #include <optional>
 
+#include <boost/uuid/uuid.hpp>            // uuid class
+#include <boost/uuid/uuid_generators.hpp> // generators (random, name-based, etc.)
+#include <boost/uuid/uuid_io.hpp>
+
 #define MIN_BARRAK_NAME_LEN 5
 
 struct UserAccount {
@@ -59,16 +63,20 @@ struct BarrackMember {
 };
 
 struct ChatMessage {
-    std::string message_id;     // Primary Key (e.g., UUID)
+    boost::uuids::uuid message_id;     // Primary Key (e.g., UUID)
     std::string barrack_id;     // Foreign Key to Barracks.barrack_id (where message was sent)
     std::string sender_user_id; // Foreign Key to UserAccounts.user_id
     std::string content;        // The message text
+    uint64_t sequence_id;
     std::chrono::system_clock::time_point sent_at;
 
-    ChatMessage(std::string mid, std::string bid, std::string sid, std::string msg_content,
-                std::chrono::system_clock::time_point sent)
+    ChatMessage(boost::uuids::uuid mid, std::string bid, std::string sid, std::string msg_content,
+                uint64_t sequence_id_, std::chrono::system_clock::time_point sent)
         : message_id(std::move(mid)), barrack_id(std::move(bid)),
-          sender_user_id(std::move(sid)), content(std::move(msg_content)), sent_at(sent) {}
+          sender_user_id(std::move(sid)), 
+          content(std::move(msg_content)), 
+          sequence_id(sequence_id_),
+          sent_at(sent) {}
 
     ChatMessage() = default;
     virtual ~ChatMessage() = default;
